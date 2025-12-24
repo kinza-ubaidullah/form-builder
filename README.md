@@ -1,6 +1,43 @@
-# Welcome to Your Miaoda Project
+# Form Builder Application
+
+A comprehensive drag-and-drop form builder designed for small business SaaS products, enabling users to create, customize, and manage forms with advanced features.
+
+## Features
+
+### Core Features
+- **Drag-and-Drop Interface**: Visual form editor with intuitive drag-and-drop functionality
+- **Multiple Field Types**: Text, email, number, textarea, dropdown, checkbox, radio, date, and file upload
+- **Conditional Logic**: Show/hide fields based on user responses
+- **Form Templates**: Pre-built templates for common use cases
+- **Real-time Preview**: See your form as you build it
+
+### Data Management
+- **Submissions Dashboard**: View and manage all form submissions
+- **CSV Export**: Export submissions with one click
+- **Form Analytics**: Track submission statistics
+
+### Business Features
+- **Multi-User Access**: Team collaboration with role-based permissions (admin, editor, viewer)
+- **Branding Customization**: Custom colors and styling
+- **Form Embedding**: Generate embed codes for websites (iframe and JavaScript)
+- **Shareable Links**: Public form URLs for easy sharing
+- **Form Status Management**: Draft, published, and archived states
+
+### User Management
+- **Authentication**: Secure username/password authentication
+- **Admin Panel**: Manage users and roles
+- **Team Management**: Create and manage teams
+
+## Design
+
+- **Color Scheme**: Clean blue (#4A90E2) primary color with neutral gray (#F5F7FA) background
+- **Layout**: Card-based design with clear visual hierarchy
+- **Responsive**: Desktop-first with mobile adaptation
+- **Visual Details**: 8px rounded corners, subtle shadows, smooth transitions
 
 ## Project Info
+
+Built with modern web technologies for optimal performance and user experience.
 
 ## Project Directory
 
@@ -35,7 +72,33 @@
 
 ## Tech Stack
 
-Vite, TypeScript, React, Supabase
+Vite, TypeScript, React, Supabase, shadcn/ui, Tailwind CSS
+
+## Getting Started
+
+### First Time Setup
+
+1. **Create an account**: Sign up with a username and password
+2. **First user becomes admin**: The first registered user automatically gets admin privileges
+3. **Create your first form**: Click "Create Form" to start building
+4. **Add fields**: Drag and drop fields from the left panel
+5. **Configure fields**: Click on a field to edit its properties
+6. **Publish**: Change status to "Published" to make the form accessible
+7. **Share**: Use the embed code or share the public link
+
+### User Roles
+
+- **Admin**: Full access to all features, can manage users and roles
+- **User**: Can create and manage their own forms and teams
+
+### Form Workflow
+
+1. **Create**: Build your form with drag-and-drop
+2. **Configure**: Set up field validation, conditional logic, and settings
+3. **Publish**: Make the form live
+4. **Share**: Embed on your website or share the link
+5. **Collect**: Receive submissions
+6. **Analyze**: View submissions and export to CSV
 
 ## Development Guidelines
 

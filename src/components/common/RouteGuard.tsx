@@ -6,8 +6,8 @@ interface RouteGuardProps {
   children: React.ReactNode;
 }
 
-// Please add the pages that can be accessed without logging in to PUBLIC_ROUTES.
-const PUBLIC_ROUTES = ['/login', '/403', '/404'];
+// Public routes that can be accessed without logging in
+const PUBLIC_ROUTES = ['/login', '/register', '/form/*', '/403', '/404'];
 
 function matchPublicRoute(path: string, patterns: string[]) {
   return patterns.some(pattern => {

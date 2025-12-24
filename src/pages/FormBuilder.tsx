@@ -1,0 +1,394 @@
+import { useEffect, useState } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { AppLayout } from '@/components/layouts/AppLayout';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { formsApi, formFieldsApi } from '@/db/api';
+import { FieldLibrary } from '@/components/form-builder/FieldLibrary';
+import { FormCanvas } from '@/components/form-builder/FormCanvas';
+import { FieldProperties } from '@/components/form-builder/FieldProperties';
+import { ArrowLeft, Save, Eye, Loader2 } from 'lucide-react';
+import type { Form, FormField, FieldType } from '@/types';
+
+export default function FormBuilder() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { profile } = useAuth();
+  const { toast } = useToast();
+
+  const [form, setForm] = useState<Form | null>(null);
+  const [fields, setFields] = useState<FormField[]>([]);
+  const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
+  const [draggedFieldType, setDraggedFieldType] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const isNewForm = id === 'new';
+
+  useEffect(() => {
+    if (isNewForm) {
+      createNewForm();
+    } else if (id) {
+      loadForm(id);
+    }
+  }, [id]);
+
+  const createNewForm = async () => {
+    try {
+      setLoading(true);
+      const newForm = await formsApi.create({
+        title: 'Untitled Form',
+        created_by: profile!.id,
+        status: 'draft',
+        settings: {},
+        branding: {},
+      });
+      setForm(newForm);
+      setFields([]);
+      navigate(`/forms/${newForm.id}/edit`, { replace: true });
+    } catch (error) {
+      console.error('Failed to create form:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to create form',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadForm = async (formId: string) => {
+    try {
+      setLoading(true);
+      const formData = await formsApi.getById(formId);
+      if (!formData) {
+        toast({
+          title: 'Error',
+          description: 'Form not found',
+          variant: 'destructive',
+        });
+        navigate('/forms');
+        return;
+      }
+      setForm(formData);
+      
+      const fieldsData = await formFieldsApi.getByFormId(formId);
+      setFields(fieldsData);
+    } catch (error) {
+      console.error('Failed to load form:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load form',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!form) return;
+
+    try {
+      setSaving(true);
+      await formsApi.update(form.id, {
+        title: form.title,
+        description: form.description,
+        status: form.status,
+        settings: form.settings,
+        branding: form.branding,
+      });
+
+      toast({
+        title: 'Success',
+        description: 'Form saved successfully',
+      });
+    } catch (error) {
+      console.error('Failed to save form:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to save form',
+        variant: 'destructive',
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleFieldDragStart = (fieldType: string) => {
+    setDraggedFieldType(fieldType);
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    if (!draggedFieldType || !form) return;
+
+    try {
+      const newField = await formFieldsApi.create({
+        form_id: form.id,
+        field_type: draggedFieldType as FieldType,
+        label: `New ${draggedFieldType} field`,
+        position: fields.length,
+        required: false,
+        options: ['dropdown', 'checkbox', 'radio'].includes(draggedFieldType)
+          ? [
+              { label: 'Option 1', value: 'option_1' },
+              { label: 'Option 2', value: 'option_2' },
+            ]
+          : null,
+      });
+
+      setFields([...fields, newField]);
+      setSelectedFieldId(newField.id);
+      toast({
+        title: 'Success',
+        description: 'Field added successfully',
+      });
+    } catch (error) {
+      console.error('Failed to add field:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to add field',
+        variant: 'destructive',
+      });
+    } finally {
+      setDraggedFieldType(null);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleFieldUpdate = async (fieldId: string, updates: Partial<FormField>) => {
+    try {
+      await formFieldsApi.update(fieldId, updates);
+      setFields(fields.map((f) => (f.id === fieldId ? { ...f, ...updates } : f)));
+    } catch (error) {
+      console.error('Failed to update field:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update field',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleFieldDelete = async (fieldId: string) => {
+    try {
+      await formFieldsApi.delete(fieldId);
+      setFields(fields.filter((f) => f.id !== fieldId));
+      if (selectedFieldId === fieldId) {
+        setSelectedFieldId(null);
+      }
+      toast({
+        title: 'Success',
+        description: 'Field deleted successfully',
+      });
+    } catch (error) {
+      console.error('Failed to delete field:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete field',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleFieldReorder = (fromIndex: number, toIndex: number) => {
+    const newFields = [...fields];
+    const [removed] = newFields.splice(fromIndex, 1);
+    newFields.splice(toIndex, 0, removed);
+    setFields(newFields);
+  };
+
+  const selectedField = fields.find((f) => f.id === selectedFieldId) || null;
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center min-h-screen">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (!form) {
+    return null;
+  }
+
+  return (
+    <AppLayout>
+      <div className="flex flex-col h-screen">
+        {/* Header */}
+        <div className="border-b bg-card px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Button variant="ghost" size="icon" asChild>
+                <Link to="/forms">
+                  <ArrowLeft className="h-5 w-5" />
+                </Link>
+              </Button>
+              <div>
+                <Input
+                  value={form.title}
+                  onChange={(e) => setForm({ ...form, title: e.target.value })}
+                  className="text-xl font-bold border-none p-0 h-auto focus-visible:ring-0"
+                  placeholder="Form Title"
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Select
+                value={form.status}
+                onValueChange={(value: any) => setForm({ ...form, status: value })}
+              >
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="published">Published</SelectItem>
+                  <SelectItem value="archived">Archived</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button variant="outline" asChild>
+                <Link to={`/form/${form.id}`} target="_blank">
+                  <Eye className="mr-2 h-4 w-4" />
+                  Preview
+                </Link>
+              </Button>
+              <Button onClick={handleSave} disabled={saving}>
+                {saving ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="mr-2 h-4 w-4" />
+                )}
+                Save
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Builder Content */}
+        <div className="flex-1 overflow-hidden">
+          <Tabs defaultValue="build" className="h-full">
+            <div className="border-b px-6">
+              <TabsList>
+                <TabsTrigger value="build">Build</TabsTrigger>
+                <TabsTrigger value="settings">Settings</TabsTrigger>
+              </TabsList>
+            </div>
+
+            <TabsContent value="build" className="h-full m-0 p-0">
+              <div className="grid grid-cols-12 gap-6 p-6 h-full overflow-auto">
+                {/* Field Library */}
+                <div className="col-span-12 lg:col-span-3">
+                  <FieldLibrary onFieldDragStart={handleFieldDragStart} />
+                </div>
+
+                {/* Form Canvas */}
+                <div className="col-span-12 lg:col-span-6">
+                  <FormCanvas
+                    fields={fields}
+                    selectedFieldId={selectedFieldId}
+                    onFieldSelect={setSelectedFieldId}
+                    onFieldDelete={handleFieldDelete}
+                    onFieldReorder={handleFieldReorder}
+                    onDrop={handleDrop}
+                    onDragOver={handleDragOver}
+                  />
+                </div>
+
+                {/* Field Properties */}
+                <div className="col-span-12 lg:col-span-3">
+                  <FieldProperties
+                    field={selectedField}
+                    onUpdate={(updates) =>
+                      selectedField && handleFieldUpdate(selectedField.id, updates)
+                    }
+                  />
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="settings" className="p-6 space-y-6">
+              <div className="max-w-2xl space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="form-description">Description</Label>
+                  <Textarea
+                    id="form-description"
+                    value={form.description || ''}
+                    onChange={(e) => setForm({ ...form, description: e.target.value || null })}
+                    placeholder="Add a description for your form"
+                    rows={3}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="submit-button">Submit Button Text</Label>
+                  <Input
+                    id="submit-button"
+                    value={form.settings?.submit_button_text || 'Submit'}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        settings: { ...form.settings, submit_button_text: e.target.value },
+                      })
+                    }
+                    placeholder="Submit"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="success-message">Success Message</Label>
+                  <Textarea
+                    id="success-message"
+                    value={form.settings?.success_message || ''}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        settings: { ...form.settings, success_message: e.target.value },
+                      })
+                    }
+                    placeholder="Thank you for your submission!"
+                    rows={2}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="redirect-url">Redirect URL (optional)</Label>
+                  <Input
+                    id="redirect-url"
+                    value={form.settings?.redirect_url || ''}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        settings: { ...form.settings, redirect_url: e.target.value },
+                      })
+                    }
+                    placeholder="https://example.com/thank-you"
+                  />
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
+    </AppLayout>
+  );
+}
