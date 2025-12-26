@@ -67,7 +67,11 @@ export type FieldType =
   | 'checkbox'
   | 'radio'
   | 'date'
-  | 'file';
+  | 'file'
+  | 'rating'
+  | 'switch'
+  | 'phone'
+  | 'url';
 
 export interface FieldOption {
   label: string;

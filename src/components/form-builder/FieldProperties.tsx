@@ -1,13 +1,21 @@
 import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { Plus, X } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Plus, X, Settings2, Sliders, CheckCircle2, AlertCircle, ListTree } from 'lucide-react';
 import type { FormField, FieldOption } from '@/types';
+import { fieldTypes } from './field-types';
 
 interface FieldPropertiesProps {
   field: FormField | null;
@@ -21,15 +29,32 @@ export function FieldProperties({ field, onUpdate }: FieldPropertiesProps) {
     setLocalField(field);
   }, [field]);
 
+  const getFieldIcon = (fieldType: string) => {
+    const config = fieldTypes.find((f) => f.type === fieldType);
+    return config?.icon || Settings2;
+  };
+
   if (!localField) {
     return (
-      <Card>
-        <CardContent className="p-6">
-          <p className="text-muted-foreground text-center">
-            Select a field to edit its properties
-          </p>
-        </CardContent>
-      </Card>
+      <motion.div
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        className="h-full"
+      >
+        <Card className="border-2 border-dashed border-slate-200 bg-slate-50/50 rounded-[32px] overflow-hidden">
+          <CardContent className="p-12 flex flex-col items-center justify-center text-center space-y-4">
+            <div className="w-16 h-16 rounded-2xl bg-white shadow-sm border border-slate-100 flex items-center justify-center">
+              <Sliders className="h-8 w-8 text-slate-300" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-lg font-black text-slate-900 tracking-tight italic">Blueprint</h3>
+              <p className="text-slate-400 font-bold text-xs max-w-[200px] italic">
+                Select a field on the canvas to configure its elite properties.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
     );
   }
 
@@ -65,110 +90,162 @@ export function FieldProperties({ field, onUpdate }: FieldPropertiesProps) {
   };
 
   const needsOptions = ['dropdown', 'checkbox', 'radio'].includes(localField.field_type);
+  const FieldIcon = getFieldIcon(localField.field_type);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">Field Properties</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Label */}
-        <div className="space-y-2">
-          <Label htmlFor="field-label">Label</Label>
-          <Input
-            id="field-label"
-            value={localField.label}
-            onChange={(e) => handleChange('label', e.target.value)}
-            placeholder="Enter field label"
-          />
-        </div>
-
-        {/* Placeholder */}
-        {!['checkbox', 'radio'].includes(localField.field_type) && (
-          <div className="space-y-2">
-            <Label htmlFor="field-placeholder">Placeholder</Label>
-            <Input
-              id="field-placeholder"
-              value={localField.placeholder || ''}
-              onChange={(e) => handleChange('placeholder', e.target.value || null)}
-              placeholder="Enter placeholder text"
-            />
-          </div>
-        )}
-
-        {/* Help Text */}
-        <div className="space-y-2">
-          <Label htmlFor="field-help">Help Text</Label>
-          <Textarea
-            id="field-help"
-            value={localField.help_text || ''}
-            onChange={(e) => handleChange('help_text', e.target.value || null)}
-            placeholder="Add helpful description"
-            rows={2}
-          />
-        </div>
-
-        {/* Required */}
-        <div className="flex items-center justify-between">
-          <Label htmlFor="field-required">Required Field</Label>
-          <Switch
-            id="field-required"
-            checked={localField.required}
-            onCheckedChange={(checked) => handleChange('required', checked)}
-          />
-        </div>
-
-        {/* Options for dropdown, checkbox, radio */}
-        {needsOptions && (
-          <>
-            <Separator />
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label>Options</Label>
-                <Button size="sm" variant="outline" onClick={addOption}>
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add Option
-                </Button>
-              </div>
-              <div className="space-y-2">
-                {(localField.options || []).map((option, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <Input
-                      value={option.label}
-                      onChange={(e) => updateOption(index, 'label', e.target.value)}
-                      placeholder="Label"
-                      className="flex-1"
-                    />
-                    <Input
-                      value={option.value}
-                      onChange={(e) => updateOption(index, 'value', e.target.value)}
-                      placeholder="Value"
-                      className="flex-1"
-                    />
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => removeOption(index)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
+    <motion.div
+      key={localField.id}
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 20 }}
+      transition={{ type: "spring", damping: 25, stiffness: 200 }}
+      className="h-full space-y-6"
+    >
+      <Card className="border-2 border-slate-100 rounded-[32px] overflow-hidden shadow-xl shadow-slate-200/20 bg-white">
+        <CardHeader className="border-b bg-slate-50/50 py-6">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-white rounded-xl shadow-sm border border-slate-100">
+              <FieldIcon className="h-5 w-5 text-[#2196F3]" />
             </div>
-          </>
-        )}
+            <div>
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 block mb-0.5">Configuration</span>
+              <CardTitle className="text-xl font-black text-slate-900 tracking-tighter italic">Properties</CardTitle>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="p-6 space-y-8 max-h-[calc(100vh-250px)] overflow-y-auto custom-scrollbar">
+          {/* Base Configuration */}
+          <div className="space-y-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Settings2 className="h-4 w-4 text-slate-400" />
+              <h4 className="text-[10px] font-black uppercase tracking-widest text-[#2196F3]">Standard Settings</h4>
+            </div>
 
-        {/* Validation */}
-        {['text', 'textarea', 'number'].includes(localField.field_type) && (
-          <>
-            <Separator />
-            <div className="space-y-3">
-              <Label>Validation</Label>
+            <div className="space-y-2">
+              <Label htmlFor="field-label" className="text-xs font-black uppercase tracking-wider text-slate-500">Field Label</Label>
+              <Input
+                id="field-label"
+                value={localField.label}
+                onChange={(e) => handleChange('label', e.target.value)}
+                placeholder="Enter field label"
+                className="rounded-xl border-2 border-slate-100 focus:border-[#2196F3] transition-all font-bold"
+              />
+            </div>
+
+            {!['checkbox', 'radio'].includes(localField.field_type) && (
+              <div className="space-y-2">
+                <Label htmlFor="field-placeholder" className="text-xs font-black uppercase tracking-wider text-slate-500">Placeholder</Label>
+                <Input
+                  id="field-placeholder"
+                  value={localField.placeholder || ''}
+                  onChange={(e) => handleChange('placeholder', e.target.value || null)}
+                  placeholder="Enter placeholder text"
+                  className="rounded-xl border-2 border-slate-100 focus:border-[#2196F3] transition-all font-bold"
+                />
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="field-help" className="text-xs font-black uppercase tracking-wider text-slate-500">Contextual Help</Label>
+              <Textarea
+                id="field-help"
+                value={localField.help_text || ''}
+                onChange={(e) => handleChange('help_text', e.target.value || null)}
+                placeholder="Add helpful description for the user"
+                className="rounded-xl border-2 border-slate-100 focus:border-[#2196F3] transition-all font-bold resize-none"
+                rows={3}
+              />
+            </div>
+
+            <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 text-red-400" />
+                <div className="flex flex-col">
+                  <Label htmlFor="field-required" className="text-xs font-black uppercase tracking-tight text-slate-900 italic">Mandatory Field</Label>
+                  <span className="text-[10px] font-bold text-slate-400 italic">User must complete this</span>
+                </div>
+              </div>
+              <Switch
+                id="field-required"
+                checked={localField.required}
+                onCheckedChange={(checked) => handleChange('required', checked)}
+                className="data-[state=checked]:bg-[#2196F3]"
+              />
+            </div>
+          </div>
+
+          {/* Options Section */}
+          <AnimatePresence>
+            {needsOptions && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="space-y-6 pt-6 border-t"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <ListTree className="h-4 w-4 text-slate-400" />
+                    <h4 className="text-[10px] font-black uppercase tracking-widest text-[#2196F3]">Data Options</h4>
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={addOption}
+                    className="rounded-lg bg-slate-900 hover:bg-black text-white px-3 font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all"
+                  >
+                    <Plus className="h-3.5 w-3.5 mr-1 text-[#2196F3]" />
+                    Add Entry
+                  </Button>
+                </div>
+
+                <div className="space-y-3">
+                  {(localField.options || []).map((option, index) => (
+                    <motion.div
+                      key={index}
+                      initial={{ x: -10, opacity: 0 }}
+                      animate={{ x: 0, opacity: 1 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="flex items-center gap-2 group"
+                    >
+                      <Input
+                        value={option.label}
+                        onChange={(e) => updateOption(index, 'label', e.target.value)}
+                        placeholder="Label"
+                        className="rounded-lg border-2 border-slate-50 focus:border-[#2196F3] transition-all font-bold text-xs h-9"
+                      />
+                      <Input
+                        value={option.value}
+                        onChange={(e) => updateOption(index, 'value', e.target.value)}
+                        placeholder="Value"
+                        className="rounded-lg border-2 border-slate-50 focus:border-[#2196F3] transition-all font-bold text-xs h-9"
+                      />
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => removeOption(index)}
+                        className="h-9 w-9 rounded-lg hover:bg-red-50 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all shrink-0"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Validation Section */}
+          {['text', 'textarea', 'number', 'rating'].includes(localField.field_type) && (
+            <div className="space-y-6 pt-6 border-t">
+              <div className="flex items-center gap-2 mb-4">
+                <CheckCircle2 className="h-4 w-4 text-slate-400" />
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-[#2196F3]">Guardrails</h4>
+              </div>
+
               {['text', 'textarea'].includes(localField.field_type) && (
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1">
-                    <Label htmlFor="min-length" className="text-xs">Min Length</Label>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="min-length" className="text-[10px] font-black uppercase tracking-wider text-slate-500">Min Length</Label>
                     <Input
                       id="min-length"
                       type="number"
@@ -180,10 +257,11 @@ export function FieldProperties({ field, onUpdate }: FieldPropertiesProps) {
                         })
                       }
                       placeholder="Min"
+                      className="rounded-xl border-2 border-slate-50 focus:border-[#2196F3] font-bold h-10"
                     />
                   </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="max-length" className="text-xs">Max Length</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="max-length" className="text-[10px] font-black uppercase tracking-wider text-slate-500">Max Length</Label>
                     <Input
                       id="max-length"
                       type="number"
@@ -195,14 +273,16 @@ export function FieldProperties({ field, onUpdate }: FieldPropertiesProps) {
                         })
                       }
                       placeholder="Max"
+                      className="rounded-xl border-2 border-slate-50 focus:border-[#2196F3] font-bold h-10"
                     />
                   </div>
                 </div>
               )}
+
               {localField.field_type === 'number' && (
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1">
-                    <Label htmlFor="min-value" className="text-xs">Min Value</Label>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="min-value" className="text-[10px] font-black uppercase tracking-wider text-slate-500">Min Value</Label>
                     <Input
                       id="min-value"
                       type="number"
@@ -214,10 +294,11 @@ export function FieldProperties({ field, onUpdate }: FieldPropertiesProps) {
                         })
                       }
                       placeholder="Min"
+                      className="rounded-xl border-2 border-slate-50 focus:border-[#2196F3] font-bold h-10"
                     />
                   </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="max-value" className="text-xs">Max Value</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="max-value" className="text-[10px] font-black uppercase tracking-wider text-slate-500">Max Value</Label>
                     <Input
                       id="max-value"
                       type="number"
@@ -229,14 +310,35 @@ export function FieldProperties({ field, onUpdate }: FieldPropertiesProps) {
                         })
                       }
                       placeholder="Max"
+                      className="rounded-xl border-2 border-slate-50 focus:border-[#2196F3] font-bold h-10"
                     />
                   </div>
                 </div>
               )}
+
+              {localField.field_type === 'rating' && (
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="max-rating" className="text-[10px] font-black uppercase tracking-wider text-slate-500">Maximum Rating Scale</Label>
+                    <Select
+                      value={String(localField.validation?.max_value || 5)}
+                      onValueChange={(val) => handleChange('validation', { ...localField.validation, max_value: Number(val) })}
+                    >
+                      <SelectTrigger className="rounded-xl border-2 border-slate-50 font-bold h-10">
+                        <SelectValue placeholder="Select Scale" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="5">5 Stars</SelectItem>
+                        <SelectItem value="10">10 Stars</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
             </div>
-          </>
-        )}
-      </CardContent>
-    </Card>
+          )}
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 }

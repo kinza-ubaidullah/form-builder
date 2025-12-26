@@ -9,9 +9,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { PaymentModal } from '@/components/payment/PaymentModal';
 import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from '@/lib/utils';
 import { allTemplates, TemplateConfig } from '@/data/templatesData';
 import {
-  Plus,
   ArrowRight,
   Lock,
   Sparkles,
@@ -33,11 +33,12 @@ export default function Templates() {
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateConfig | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedPrice, setSelectedPrice] = useState<'All' | 'Free' | 'Premium'>('All');
 
   const carouselRef = useRef<HTMLDivElement>(null); // For categories
 
   const categories = useMemo(() => {
-    return ['All', 'Free', 'Premium', ...new Set(allTemplates.map(t => t.category))];
+    return ['All', ...new Set(allTemplates.map(t => t.category))];
   }, []);
 
   const filteredTemplates = useMemo(() => {
@@ -49,14 +50,15 @@ export default function Templates() {
 
     return sorted.filter(template => {
       const matchesSearch = template.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        template.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
         template.category.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory = selectedCategory === 'All' ||
-        (selectedCategory === 'Free' && template.isFree) ||
-        (selectedCategory === 'Premium' && !template.isFree) ||
-        template.category === selectedCategory;
-      return matchesSearch && matchesCategory;
+      const matchesCategory = selectedCategory === 'All' || template.category === selectedCategory;
+      const matchesPrice = selectedPrice === 'All' ||
+        (selectedPrice === 'Free' && template.isFree) ||
+        (selectedPrice === 'Premium' && !template.isFree);
+      return matchesSearch && matchesCategory && matchesPrice;
     });
-  }, [searchQuery, selectedCategory]);
+  }, [searchQuery, selectedCategory, selectedPrice]);
 
   const isPremium = profile?.is_premium || false;
 
@@ -71,26 +73,31 @@ export default function Templates() {
     }
 
     try {
+      if (!template.id) {
+        toast({ title: 'Error', description: 'Invalid template structure' });
+        return;
+      }
       setCreating(template.id);
       const newForm = await formsApi.create({
-        title: template.title,
-        description: template.description,
+        title: template.title || 'Untitled Form',
+        description: template.description || '',
         created_by: profile.id,
         status: 'draft',
         settings: {},
         branding: {},
       });
 
-      const fieldPromises = template.fields.map(field =>
+      const fieldPromises = (template.fields || []).map(field =>
         formFieldsApi.create({ ...field, form_id: newForm.id })
       );
 
       await Promise.all(fieldPromises);
-      toast({ title: 'Success', description: 'Form created from template' });
+      toast({ title: 'Success', description: 'Form created successfully' });
       navigate(`/forms/${newForm.id}/edit`);
     } catch (error) {
-      console.error('Failed to create form:', error);
-      toast({ title: 'Error', description: 'Failed to create form', variant: 'destructive' });
+      console.error('Failed to create form from template:', error);
+      toast({ title: 'Error', description: 'Failed to build form', variant: 'destructive' });
+    } finally {
       setCreating(null);
     }
   };
@@ -147,23 +154,29 @@ export default function Templates() {
               )}
 
               <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                <div className="relative group flex-grow sm:flex-grow-0 sm:min-w-[220px]">
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 group-focus-within:text-primary transition-all" />
+                <div className="flex bg-slate-100 p-1 rounded-xl">
+                  {['All', 'Free', 'Premium'].map((p) => (
+                    <button
+                      key={p}
+                      onClick={() => setSelectedPrice(p as any)}
+                      className={cn(
+                        "px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                        selectedPrice === p ? "bg-white text-[#2196F3] shadow-sm" : "text-slate-500"
+                      )}
+                    >
+                      {p}
+                    </button>
+                  ))}
+                </div>
+                <div className="relative group flex-grow sm:flex-grow-0 sm:min-w-[280px]">
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-[#2196F3] transition-all" />
                   <Input
-                    placeholder="Search industry..."
-                    className="pl-10 h-11 bg-white/90 border-slate-200 focus:ring-4 focus:ring-primary/5 rounded-lg font-bold text-sm shadow-sm border-2 transition-all"
+                    placeholder="Search blueprints..."
+                    className="pl-10 h-11 bg-white/90 border-slate-200 focus:ring-4 focus:ring-primary/5 rounded-xl font-bold text-sm shadow-sm border-2 transition-all"
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
                   />
                 </div>
-                <Button
-                  size="default"
-                  onClick={() => navigate('/forms/new')}
-                  className="h-10 px-4 text-xs font-black shadow-md shadow-[#2094f3]/20 transition-all rounded-lg active:scale-95 group bg-[#2094f3] hover:bg-[#1a7bc9] text-white"
-                >
-                  <Plus className="mr-1 h-3.5 w-3.5 stroke-[3px]" />
-                  Blank Canvas
-                </Button>
               </div>
             </div>
           </motion.div>
@@ -325,7 +338,7 @@ export default function Templates() {
                               : 'bg-[#2094f3] hover:bg-[#1a7bc9] text-white shadow-[#2094f3]/10'
                               }`}
                             onClick={() => handleTemplateClick(template)}
-                            disabled={!!creating}
+                            disabled={creating === template.id}
                           >
                             {creating === template.id ? (
                               <Loader2 className="h-4 w-4 animate-spin" />

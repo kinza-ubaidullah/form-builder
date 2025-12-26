@@ -1,14 +1,18 @@
 import type { FieldType } from '@/types';
-import { 
-  Type, 
-  Mail, 
-  Hash, 
-  AlignLeft, 
-  ChevronDown, 
-  CheckSquare, 
-  Circle, 
+import {
+  Type,
+  Mail,
+  Hash,
+  AlignLeft,
+  ChevronDown,
+  CheckSquare,
+  Circle,
   Calendar,
   Upload,
+  Star,
+  ToggleRight,
+  Phone,
+  Globe,
 } from 'lucide-react';
 
 export interface FieldTypeConfig {
@@ -72,5 +76,29 @@ export const fieldTypes: FieldTypeConfig[] = [
     label: 'File Upload',
     icon: Upload,
     description: 'File upload field',
+  },
+  {
+    type: 'rating',
+    label: 'Elite Rating',
+    icon: Star,
+    description: 'Premium satisfaction scale',
+  },
+  {
+    type: 'switch',
+    label: 'Power Toggle',
+    icon: ToggleRight,
+    description: 'Binary switch interaction',
+  },
+  {
+    type: 'phone',
+    label: 'Mobile Contact',
+    icon: Phone,
+    description: 'Global phone connectivity',
+  },
+  {
+    type: 'url',
+    label: 'Digital Link',
+    icon: Globe,
+    description: 'Website or social profile',
   },
 ];
