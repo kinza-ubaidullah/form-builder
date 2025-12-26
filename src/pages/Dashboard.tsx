@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layouts/AppLayout';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { formsApi, submissionsApi } from '@/db/api';
@@ -15,8 +15,22 @@ import {
   Eye,
   ArrowRight,
   Zap,
-  LayoutTemplate
+  LayoutTemplate,
+  MoreVertical,
+  Copy,
+  Archive,
+  Trash2,
+  ChevronRight,
+  BarChart3,
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useToast } from '@/hooks/use-toast';
 import { motion } from 'motion/react';
 import type { Form } from '@/types';
 
@@ -63,6 +77,57 @@ export default function Dashboard() {
       });
     } catch (error) {
       console.error('Failed to load dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const { toast } = useToast();
+
+  const handleDuplicate = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    e.preventDefault();
+    try {
+      setLoading(true);
+      await formsApi.duplicate(id);
+      toast({ title: 'Success', description: 'Form duplicated successfully' });
+      await loadData();
+    } catch (error) {
+      console.error('Failed to duplicate form:', error);
+      toast({ title: 'Error', description: 'Failed to duplicate form', variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (!confirm('Are you sure you want to delete this form?')) return;
+    try {
+      setLoading(true);
+      await formsApi.delete(id);
+      toast({ title: 'Success', description: 'Form deleted successfully' });
+      await loadData();
+    } catch (error) {
+      console.error('Failed to delete form:', error);
+      toast({ title: 'Error', description: 'Failed to delete form', variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleArchive = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    e.preventDefault();
+    try {
+      setLoading(true);
+      await formsApi.update(id, { status: 'archived' });
+      toast({ title: 'Success', description: 'Form archived' });
+      await loadData();
+    } catch (error) {
+      console.error('Failed to archive form:', error);
+      toast({ title: 'Error', description: 'Failed to archive form', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -288,8 +353,44 @@ export default function Dashboard() {
                             <span className="text-xs text-muted-foreground whitespace-nowrap tabular-nums">
                               {new Date(form.updated_at).toLocaleDateString()}
                             </span>
-                            <div className="h-8 w-8 rounded-full bg-background border flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-sm transform translate-x-2 group-hover:translate-x-0">
-                              <ArrowRight className="h-4 w-4 text-foreground" />
+
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 rounded-full opacity-0 group-hover:opacity-100 transition-all hover:bg-slate-200/50"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                  }}
+                                >
+                                  <MoreVertical className="h-4 w-4 text-slate-500" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-56 p-2 rounded-[20px] border-2 border-slate-100 shadow-2xl">
+                                <DropdownMenuItem onClick={(e) => handleDuplicate(e, form.id)} className="rounded-xl flex items-center gap-2 p-3 font-bold text-xs uppercase tracking-tighter cursor-pointer">
+                                  <Copy className="h-4 w-4 text-primary" />
+                                  Clone Instance
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => navigate(`/submissions?formId=${form.id}`)} className="rounded-xl flex items-center gap-2 p-3 font-bold text-xs uppercase tracking-tighter cursor-pointer">
+                                  <BarChart3 className="h-4 w-4 text-emerald-500" />
+                                  View Analytics
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator className="my-2 bg-slate-50" />
+                                <DropdownMenuItem onClick={(e) => handleArchive(e, form.id)} className="rounded-xl flex items-center gap-2 p-3 font-bold text-xs uppercase tracking-tighter cursor-pointer">
+                                  <Archive className="h-4 w-4 text-amber-500" />
+                                  Archive Protocol
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={(e) => handleDelete(e, form.id)} className="rounded-xl flex items-center gap-2 p-3 font-bold text-xs uppercase tracking-tighter cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50">
+                                  <Trash2 className="h-4 w-4" />
+                                  Destroy Record
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+
+                            <div className="h-8 w-8 rounded-full bg-slate-900 border flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-sm transform translate-x-1 group-hover:translate-x-0">
+                              <ChevronRight className="h-4 w-4 text-white" />
                             </div>
                           </div>
                         </Link>

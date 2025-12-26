@@ -22,7 +22,7 @@ import { FieldLibrary } from '@/components/form-builder/FieldLibrary';
 import { FormCanvas } from '@/components/form-builder/FormCanvas';
 import { FieldProperties } from '@/components/form-builder/FieldProperties';
 import { PremiumLock } from '@/components/common/PremiumLock';
-import { ArrowLeft, Save, Eye, Loader2, Palette, Plug, Palette as PaletteIcon, Type, Image as ImageIcon, Bell, Webhook as WebhookIcon, Keyboard } from 'lucide-react';
+import { ArrowLeft, Save, Eye, Loader2, Palette, Plug, Palette as PaletteIcon, Type, Image as ImageIcon, Bell, Webhook as WebhookIcon, Keyboard, Zap } from 'lucide-react';
 import type { Form, FormField, FieldType } from '@/types';
 import { cn } from '@/lib/utils';
 
@@ -267,6 +267,17 @@ export default function FormBuilder() {
   };
 
 
+  const handleBrandingUpdate = (updates: Partial<NonNullable<Form['branding']>>) => {
+    if (!form) return;
+    setForm({
+      ...form,
+      branding: {
+        ...(form.branding || {}),
+        ...updates
+      }
+    });
+  };
+
   const selectedField = fields.find((f) => f.id === selectedFieldId) || null;
 
   if (loading) {
@@ -387,6 +398,7 @@ export default function FormBuilder() {
                       onFieldMove={handleFieldMove}
                       onDrop={handleDrop}
                       onDragOver={handleDragOver}
+                      branding={form?.branding}
                     />
                   </div>
 
@@ -408,64 +420,115 @@ export default function FormBuilder() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <PremiumLock title="Custom Branding" description="Upgrade to customize colors, fonts, and add your logo.">
-                    <div className="max-w-xl mx-auto space-y-8">
-                      <div className="space-y-4">
-                        <h3 className="font-semibold text-lg flex items-center gap-2">
-                          <PaletteIcon className="h-5 w-5" /> Brand Colors
-                        </h3>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label>Primary Color</Label>
-                            <div className="h-10 w-full bg-primary rounded-md border flex items-center justify-center text-primary-foreground font-mono text-sm">#0F172A</div>
-                          </div>
-                          <div className="space-y-2">
-                            <Label>Background Color</Label>
-                            <div className="h-10 w-full bg-background rounded-md border flex items-center justify-center text-foreground font-mono text-sm">#FFFFFF</div>
-                          </div>
+                  <div className="max-w-2xl mx-auto space-y-8 bg-white p-8 rounded-[32px] border-2 border-slate-100 shadow-xl shadow-slate-200/20">
+                    <div className="flex items-center justify-between mb-8">
+                      <div className="flex items-center gap-3">
+                        <div className="p-3 bg-primary rounded-2xl shadow-lg">
+                          <PaletteIcon className="h-6 w-6 text-white" />
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 block mb-0.5">Premium Access</span>
+                          <h2 className="text-2xl font-black text-slate-900 tracking-tighter italic">Elite Branding</h2>
                         </div>
                       </div>
+                      <Button onClick={handleSave} className="rounded-xl bg-primary hover:bg-slate-900 font-black text-xs uppercase tracking-widest px-6 h-11 active:scale-95 transition-all">
+                        Save Blueprint
+                      </Button>
+                    </div>
 
-                      <div className="space-y-4">
-                        <h3 className="font-semibold text-lg flex items-center gap-2">
-                          <Type className="h-5 w-5" /> Typography
-                        </h3>
-                        <div className="space-y-2">
-                          <Label>Font Family</Label>
-                          <Select disabled>
-                            <SelectTrigger><SelectValue placeholder="Inter (Default)" /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="inter">Inter</SelectItem>
+                    <div className="space-y-8">
+                      <div className="grid grid-cols-2 gap-6">
+                        <div className="space-y-3">
+                          <Label className="text-xs font-black uppercase tracking-wider text-slate-500">Primary Identity Color</Label>
+                          <div className="flex gap-2">
+                            <Input
+                              type="color"
+                              value={form?.branding?.primary_color || '#2196F3'}
+                              onChange={(e) => handleBrandingUpdate({ primary_color: e.target.value })}
+                              className="w-12 h-11 p-1 rounded-xl border-2 border-slate-100 cursor-pointer"
+                            />
+                            <Input
+                              value={form?.branding?.primary_color || '#2196F3'}
+                              onChange={(e) => handleBrandingUpdate({ primary_color: e.target.value })}
+                              placeholder="#000000"
+                              className="flex-1 rounded-xl border-2 border-slate-100 font-mono font-bold h-11"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-3">
+                          <Label className="text-xs font-black uppercase tracking-wider text-slate-500">Visual Curvature (Radius)</Label>
+                          <Select
+                            value={form?.branding?.border_radius || 'large'}
+                            onValueChange={(val) => handleBrandingUpdate({ border_radius: val })}
+                          >
+                            <SelectTrigger className="rounded-xl border-2 border-slate-100 h-11 font-bold">
+                              <SelectValue placeholder="Select Radius" />
+                            </SelectTrigger>
+                            <SelectContent className="rounded-2xl border-2">
+                              <SelectItem value="none" className="font-bold">None (Sharp Architecture)</SelectItem>
+                              <SelectItem value="medium" className="font-bold">Medium (Classic Balanced)</SelectItem>
+                              <SelectItem value="large" className="font-bold">Large (Smooth Modern)</SelectItem>
+                              <SelectItem value="full" className="font-bold">Maximum (Organic Round)</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
                       </div>
 
-                      <div className="space-y-4">
-                        <h3 className="font-semibold text-lg flex items-center gap-2">
-                          <ImageIcon className="h-5 w-5" /> Logo & Assets
-                        </h3>
-                        <div className="space-y-4">
-                          <div className="space-y-2">
-                            <Label>Logo</Label>
-                            <div className="border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center text-center">
-                              <Button variant="secondary" size="sm">Upload Logo</Button>
-                              <p className="text-xs text-muted-foreground mt-2">Recommended: 200x50px</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center justify-between space-x-2 border p-4 rounded-lg">
-                            <div className="space-y-0.5">
-                              <Label className="text-base">Remove 'Powered By'</Label>
-                              <p className="text-xs text-muted-foreground">
-                                Hide the FormBuilder branding in the footer
-                              </p>
-                            </div>
-                            <Switch disabled />
+                      <div className="space-y-3">
+                        <Label className="text-xs font-black uppercase tracking-wider text-slate-500">Elite Font Architecture</Label>
+                        <Select
+                          value={form?.branding?.font_family || 'inter'}
+                          onValueChange={(val) => handleBrandingUpdate({ font_family: val })}
+                        >
+                          <SelectTrigger className="rounded-xl border-2 border-slate-100 h-11 font-bold">
+                            <SelectValue placeholder="Select Font" />
+                          </SelectTrigger>
+                          <SelectContent className="rounded-2xl border-2">
+                            <SelectItem value="inter" className="font-bold">Inter (Precision Modern)</SelectItem>
+                            <SelectItem value="roboto" className="font-bold">Roboto (Dynamic System)</SelectItem>
+                            <SelectItem value="outfit" className="font-bold">Outfit (Geometric Luxe)</SelectItem>
+                            <SelectItem value="playfair" className="font-bold">Playfair (High-End Serif)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-3">
+                        <Label className="text-xs font-black uppercase tracking-wider text-slate-500">Logo Asset URL</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            value={form?.branding?.logo_url || ''}
+                            onChange={(e) => handleBrandingUpdate({ logo_url: e.target.value })}
+                            placeholder="https://assets.yourbrand.com/logo.png"
+                            className="rounded-xl border-2 border-slate-100 font-bold h-11"
+                          />
+                          <div className="w-11 h-11 rounded-xl border-2 border-slate-100 flex items-center justify-center bg-slate-50 shrink-0">
+                            {form?.branding?.logo_url ? (
+                              <img src={form.branding.logo_url} alt="Logo Preview" className="h-6 w-6 object-contain" />
+                            ) : (
+                              <ImageIcon className="h-5 w-5 text-slate-300" />
+                            )}
                           </div>
                         </div>
                       </div>
+
+                      <div className="pt-6 border-t border-slate-100">
+                        <div className="flex items-center gap-2 mb-4">
+                          <Type className="h-4 w-4 text-[#2196F3]" />
+                          <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-900">Custom Architectural CSS</h4>
+                        </div>
+                        <Textarea
+                          value={form?.branding?.custom_css || ''}
+                          onChange={(e) => handleBrandingUpdate({ custom_css: e.target.value })}
+                          placeholder="/* Advanced: Customize every mathematical element of your form */
+.form-card {
+  box-shadow: 0 50px 100px -20px rgba(50,50,93,.25);
+}"
+                          className="rounded-2xl border-2 border-slate-100 font-mono text-xs font-bold min-h-[150px] resize-none focus:border-slate-900 transition-all p-4"
+                        />
+                      </div>
                     </div>
-                  </PremiumLock>
+                  </div>
                 </motion.div>
               </TabsContent>
 
@@ -575,6 +638,29 @@ export default function FormBuilder() {
                       }
                       placeholder="https://example.com/thank-you"
                     />
+                  </div>
+
+                  <div className="pt-8 border-t space-y-6">
+                    <div className="flex items-center gap-2">
+                      <Zap className="h-4 w-4 text-[#2196F3]" />
+                      <h3 className="text-sm font-black uppercase tracking-widest text-slate-900">Advanced Protocol</h3>
+                    </div>
+
+                    <div className="grid gap-4">
+                      {[
+                        { title: 'Auto-Responders', desc: 'Send automated confirmation emails' },
+                        { title: 'Multi-Language Engine', desc: 'Translate form based on user region' },
+                        { title: 'Branching Logic Redirects', desc: 'Conditional thank-you pages' }
+                      ].map((action, i) => (
+                        <div key={i} className="p-4 bg-slate-100/50 rounded-2xl border border-slate-200/60 flex items-center justify-between group hover:border-[#2196F3]/30 transition-all">
+                          <div>
+                            <p className="text-[10px] font-black text-slate-900 uppercase italic tracking-tighter">{action.title}</p>
+                            <p className="text-[9px] font-bold text-slate-400 italic">{action.desc}</p>
+                          </div>
+                          <Switch disabled className="data-[state=checked]:bg-[#2196F3]" />
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </motion.div>
               </TabsContent>

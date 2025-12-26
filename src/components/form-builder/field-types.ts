@@ -13,6 +13,10 @@ import {
   ToggleRight,
   Phone,
   Globe,
+  Image as ImageIcon,
+  PenTool,
+  Layout,
+  ArrowRightCircle,
 } from 'lucide-react';
 
 export interface FieldTypeConfig {
@@ -73,9 +77,21 @@ export const fieldTypes: FieldTypeConfig[] = [
   },
   {
     type: 'file',
-    label: 'File Upload',
+    label: 'File Vault',
     icon: Upload,
-    description: 'File upload field',
+    description: 'Secure PDF & media upload',
+  },
+  {
+    type: 'image',
+    label: 'Image Capture',
+    icon: ImageIcon,
+    description: 'High-res photo submission',
+  },
+  {
+    type: 'signature',
+    label: 'Elite Signature',
+    icon: PenTool,
+    description: 'Legal-grade digital signing',
   },
   {
     type: 'rating',
@@ -100,5 +116,17 @@ export const fieldTypes: FieldTypeConfig[] = [
     label: 'Digital Link',
     icon: Globe,
     description: 'Website or social profile',
+  },
+  {
+    type: 'section',
+    label: 'Elite Section',
+    icon: Layout,
+    description: 'Organize fields into logical blocks',
+  },
+  {
+    type: 'page_break',
+    label: 'Page Break',
+    icon: ArrowRightCircle,
+    description: 'Split form into multiple steps',
   },
 ];

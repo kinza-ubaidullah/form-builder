@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -13,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus, X, Settings2, Sliders, CheckCircle2, AlertCircle, ListTree } from 'lucide-react';
+import { Plus, X, Settings2, Sliders, CheckCircle2, AlertCircle, ListTree, Zap, EyeOff, FileDigit, Image as ImageIcon, PenTool } from 'lucide-react';
 import type { FormField, FieldOption } from '@/types';
 import { fieldTypes } from './field-types';
 
@@ -89,6 +90,7 @@ export function FieldProperties({ field, onUpdate }: FieldPropertiesProps) {
     handleOptionsChange(currentOptions);
   };
 
+  const isStructural = ['section', 'page_break'].includes(localField.field_type);
   const needsOptions = ['dropdown', 'checkbox', 'radio'].includes(localField.field_type);
   const FieldIcon = getFieldIcon(localField.field_type);
 
@@ -118,21 +120,25 @@ export function FieldProperties({ field, onUpdate }: FieldPropertiesProps) {
           <div className="space-y-6">
             <div className="flex items-center gap-2 mb-4">
               <Settings2 className="h-4 w-4 text-slate-400" />
-              <h4 className="text-[10px] font-black uppercase tracking-widest text-[#2196F3]">Standard Settings</h4>
+              <h4 className="text-[10px] font-black uppercase tracking-widest text-[#2196F3]">
+                {isStructural ? 'Architectural Settings' : 'Standard Settings'}
+              </h4>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="field-label" className="text-xs font-black uppercase tracking-wider text-slate-500">Field Label</Label>
+              <Label htmlFor="field-label" className="text-xs font-black uppercase tracking-wider text-slate-500">
+                {localField.field_type === 'section' ? 'Section Header' : localField.field_type === 'page_break' ? 'Page Descriptor' : 'Field Label'}
+              </Label>
               <Input
                 id="field-label"
                 value={localField.label}
                 onChange={(e) => handleChange('label', e.target.value)}
-                placeholder="Enter field label"
+                placeholder={isStructural ? "Enter structural identifier" : "Enter field label"}
                 className="rounded-xl border-2 border-slate-100 focus:border-[#2196F3] transition-all font-bold"
               />
             </div>
 
-            {!['checkbox', 'radio'].includes(localField.field_type) && (
+            {!isStructural && !['checkbox', 'radio'].includes(localField.field_type) && (
               <div className="space-y-2">
                 <Label htmlFor="field-placeholder" className="text-xs font-black uppercase tracking-wider text-slate-500">Placeholder</Label>
                 <Input
@@ -145,33 +151,51 @@ export function FieldProperties({ field, onUpdate }: FieldPropertiesProps) {
               </div>
             )}
 
-            <div className="space-y-2">
-              <Label htmlFor="field-help" className="text-xs font-black uppercase tracking-wider text-slate-500">Contextual Help</Label>
-              <Textarea
-                id="field-help"
-                value={localField.help_text || ''}
-                onChange={(e) => handleChange('help_text', e.target.value || null)}
-                placeholder="Add helpful description for the user"
-                className="rounded-xl border-2 border-slate-100 focus:border-[#2196F3] transition-all font-bold resize-none"
-                rows={3}
-              />
-            </div>
-
-            <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
-              <div className="flex items-center gap-2">
-                <AlertCircle className="h-4 w-4 text-red-400" />
-                <div className="flex flex-col">
-                  <Label htmlFor="field-required" className="text-xs font-black uppercase tracking-tight text-slate-900 italic">Mandatory Field</Label>
-                  <span className="text-[10px] font-bold text-slate-400 italic">User must complete this</span>
-                </div>
+            {!isStructural && (
+              <div className="space-y-2">
+                <Label htmlFor="field-help" className="text-xs font-black uppercase tracking-wider text-slate-500">Contextual Help</Label>
+                <Textarea
+                  id="field-help"
+                  value={localField.help_text || ''}
+                  onChange={(e) => handleChange('help_text', e.target.value || null)}
+                  placeholder="Add helpful description for the user"
+                  className="rounded-xl border-2 border-slate-100 focus:border-[#2196F3] transition-all font-bold resize-none"
+                  rows={3}
+                />
               </div>
-              <Switch
-                id="field-required"
-                checked={localField.required}
-                onCheckedChange={(checked) => handleChange('required', checked)}
-                className="data-[state=checked]:bg-[#2196F3]"
-              />
-            </div>
+            )}
+
+            {!isStructural && (
+              <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4 text-red-400" />
+                  <div className="flex flex-col">
+                    <Label htmlFor="field-required" className="text-xs font-black uppercase tracking-tight text-slate-900 italic">Mandatory Field</Label>
+                    <span className="text-[10px] font-bold text-slate-400 italic">User must complete this</span>
+                  </div>
+                </div>
+                <Switch
+                  id="field-required"
+                  checked={localField.required}
+                  onCheckedChange={(checked) => handleChange('required', checked)}
+                  className="data-[state=checked]:bg-[#2196F3]"
+                />
+              </div>
+            )}
+
+            {localField.field_type === 'section' && (
+              <div className="p-4 bg-[#2196F3]/5 rounded-2xl border border-dashed border-[#2196F3]/20">
+                <p className="text-[10px] font-black text-slate-900 uppercase italic mb-1">Elite Section Blueprint</p>
+                <p className="text-[9px] font-bold text-slate-400 italic tracking-tight">Sections automatically organize fields into logical data clusters for professional clarity.</p>
+              </div>
+            )}
+
+            {localField.field_type === 'page_break' && (
+              <div className="p-4 bg-slate-900 rounded-2xl text-white shadow-lg">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-1 text-[#2196F3]">Step Protocol</p>
+                <p className="text-[9px] font-bold text-slate-300 italic">Turns your form into an elite multi-step experience. Users must interact with the next step protocol to proceed.</p>
+              </div>
+            )}
           </div>
 
           {/* Options Section */}
@@ -337,6 +361,93 @@ export function FieldProperties({ field, onUpdate }: FieldPropertiesProps) {
               )}
             </div>
           )}
+
+          {/* Elite Media Configuration */}
+          {['file', 'image'].includes(localField.field_type) && (
+            <div className="space-y-6 pt-6 border-t">
+              <div className="flex items-center gap-2 mb-4">
+                <FileDigit className="h-4 w-4 text-slate-400" />
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-[#2196F3]">Media Architecture</h4>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-wider text-slate-500">Allowed Formats</Label>
+                  <Input
+                    value={localField.validation?.pattern || ''}
+                    onChange={(e) => handleChange('validation', { ...localField.validation, pattern: e.target.value })}
+                    placeholder="e.g. .pdf, .docx, .jpg"
+                    className="rounded-xl border-2 border-slate-50 focus:border-[#2196F3] font-bold h-10"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-wider text-slate-500">Max File Size (MB)</Label>
+                  <Input
+                    type="number"
+                    value={localField.validation?.max_value || 5}
+                    onChange={(e) => handleChange('validation', { ...localField.validation, max_value: Number(e.target.value) })}
+                    placeholder="e.g. 5"
+                    className="rounded-xl border-2 border-slate-50 focus:border-[#2196F3] font-bold h-10"
+                  />
+                </div>
+              </div>
+              {localField.field_type === 'image' && (
+                <div className="mt-4 p-4 bg-[#2196F3]/5 rounded-2xl border border-dashed border-[#2196F3]/20 flex items-center gap-4">
+                  <div className="p-2 bg-white rounded-lg shadow-sm">
+                    <ImageIcon className="h-5 w-5 text-[#2196F3]" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-slate-900 uppercase italic">Image Optimization</p>
+                    <p className="text-[9px] font-bold text-slate-400 italic tracking-tight">Auto-resizing & edge-enhancement active.</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Elite Signature Configuration */}
+          {localField.field_type === 'signature' && (
+            <div className="space-y-6 pt-6 border-t font-outfit">
+              <div className="flex items-center gap-2 mb-4">
+                <PenTool className="h-4 w-4 text-slate-400" />
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-[#2196F3]">Governance & Compliance</h4>
+              </div>
+
+              <div className="space-y-4">
+                <div className="p-4 bg-slate-900 rounded-2xl text-white shadow-xl shadow-slate-900/10">
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-2 text-[#2196F3]">Signing Environment</p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-400">Legally Binding Protocol</span>
+                    <Badge className="bg-emerald-500 text-[8px] font-black">ENCRYPTED</Badge>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-wider text-slate-500">Legal Disclaimer Text</Label>
+                  <Textarea
+                    value={localField.help_text || ''}
+                    onChange={(e) => handleChange('help_text', e.target.value)}
+                    placeholder="I agree that this is a legally binding signature..."
+                    className="rounded-xl border-2 border-slate-50 focus:border-[#2196F3] font-bold text-xs"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Conditional Logic Section */}
+          <div className="space-y-6 pt-6 border-t">
+            <div className="flex items-center gap-2 mb-4">
+              <Zap className="h-4 w-4 text-slate-400" />
+              <h4 className="text-[10px] font-black uppercase tracking-widest text-[#2196F3]">Conditional Protocol</h4>
+            </div>
+
+            <div className="p-4 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-100 text-center">
+              <EyeOff className="h-6 w-6 text-slate-300 mx-auto mb-2" />
+              <p className="text-[10px] font-bold text-slate-400 italic">Advanced branching logic requires Elite access. Automate visibility based on user inputs.</p>
+              <Button variant="ghost" className="mt-2 text-[10px] font-black text-[#2196F3] uppercase tracking-widest hover:bg-white">Configure Logic</Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </motion.div>

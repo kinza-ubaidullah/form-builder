@@ -71,7 +71,11 @@ export type FieldType =
   | 'rating'
   | 'switch'
   | 'phone'
-  | 'url';
+  | 'url'
+  | 'image'
+  | 'signature'
+  | 'section'
+  | 'page_break';
 
 export interface FieldOption {
   label: string;
@@ -122,6 +126,7 @@ export interface FormBranding {
   logo_url?: string;
   primary_color?: string;
   font_family?: string;
+  border_radius?: string;
   custom_css?: string;
 }
 

@@ -91,6 +91,59 @@ export const formsApi = {
     if (error) throw error;
     return data;
   },
+
+  async duplicate(id: string) {
+    // 1. Fetch source form with fields
+    const { data: source, error: sourceError } = await supabase
+      .from('forms')
+      .select('*, fields:form_fields(*)')
+      .eq('id', id)
+      .single();
+
+    if (sourceError) throw sourceError;
+
+    // 2. Create new form metadata
+    const { data: newForm, error: createError } = await supabase
+      .from('forms')
+      .insert({
+        title: `Copy of ${source.title}`,
+        description: source.description,
+        team_id: source.team_id,
+        created_by: source.created_by,
+        status: 'draft',
+        settings: source.settings,
+        branding: source.branding,
+        is_template: false,
+      })
+      .select()
+      .single();
+
+    if (createError) throw createError;
+
+    // 3. Duplicate fields if any
+    if (source.fields && source.fields.length > 0) {
+      const newFields = source.fields.map((f: any) => ({
+        form_id: newForm.id,
+        field_type: f.field_type,
+        label: f.label,
+        placeholder: f.placeholder,
+        help_text: f.help_text,
+        required: f.required,
+        options: f.options,
+        validation: f.validation,
+        conditional_logic: f.conditional_logic,
+        position: f.position,
+      }));
+
+      const { error: fieldsError } = await supabase
+        .from('form_fields')
+        .insert(newFields);
+
+      if (fieldsError) throw fieldsError;
+    }
+
+    return newForm;
+  },
 };
 
 // Form Fields API
