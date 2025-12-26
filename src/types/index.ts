@@ -26,6 +26,7 @@ export interface Profile {
   subscription_end_date?: string | null;
   subscription_status?: SubscriptionStatus | null;
   subscription_amount?: number | null;
+  bonus_forms?: number;
   avatar_url: string | null;
   created_at: string;
   updated_at: string;
