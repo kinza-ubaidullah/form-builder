@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -16,7 +16,8 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { formsApi, formFieldsApi, submissionsApi } from '@/db/api';
-import { Loader2, CheckCircle2 } from 'lucide-react';
+import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import type { Form, FormField } from '@/types';
 
 export default function PublicForm() {
@@ -49,7 +50,7 @@ export default function PublicForm() {
         return;
       }
       setForm(formData);
-      
+
       const fieldsData = await formFieldsApi.getByFormId(formId);
       setFields(fieldsData);
     } catch (error) {
@@ -71,7 +72,7 @@ export default function PublicForm() {
 
     if (field.validation) {
       const val = field.validation;
-      
+
       if (typeof value === 'string') {
         if (val.min_length && value.length < val.min_length) {
           return `Minimum length is ${val.min_length} characters`;
@@ -115,11 +116,9 @@ export default function PublicForm() {
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      toast({
-        title: 'Validation Error',
-        description: 'Please fix the errors in the form',
-        variant: 'destructive',
-      });
+      // Smooth scroll to first error
+      const firstErrorId = Object.keys(newErrors)[0];
+      document.getElementById(firstErrorId)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
 
@@ -132,11 +131,11 @@ export default function PublicForm() {
       });
 
       setSubmitted(true);
-      
+
       if (form.settings?.redirect_url) {
         setTimeout(() => {
           window.location.href = form.settings.redirect_url!;
-        }, 2000);
+        }, 3000);
       }
     } catch (error) {
       console.error('Failed to submit form:', error);
@@ -153,93 +152,93 @@ export default function PublicForm() {
   const handleFieldChange = (fieldId: string, value: any) => {
     setFormData({ ...formData, [fieldId]: value });
     if (errors[fieldId]) {
-      setErrors({ ...errors, [fieldId]: '' });
+      const newErrors = { ...errors };
+      delete newErrors[fieldId];
+      setErrors(newErrors);
     }
   };
 
   const renderField = (field: FormField) => {
     const error = errors[field.id];
 
+    const FieldWrapper = ({ children }: { children: React.ReactNode }) => (
+      <div className="space-y-2 animate-in fade-in slide-in-from-bottom-2 duration-500">
+        <Label htmlFor={field.id} className={`text-sm font-medium ${error ? 'text-destructive' : ''}`}>
+          {field.label}
+          {field.required && <span className="text-destructive ml-1">*</span>}
+        </Label>
+        {children}
+        {field.help_text && !error && (
+          <p className="text-[0.8rem] text-muted-foreground">{field.help_text}</p>
+        )}
+        <AnimatePresence>
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="flex items-center text-sm text-destructive mt-1"
+            >
+              <AlertCircle className="h-4 w-4 mr-1" />
+              {error}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+
     switch (field.field_type) {
       case 'text':
       case 'email':
         return (
-          <div key={field.id} className="space-y-2">
-            <Label htmlFor={field.id}>
-              {field.label}
-              {field.required && <span className="text-destructive ml-1">*</span>}
-            </Label>
+          <FieldWrapper key={field.id}>
             <Input
               id={field.id}
               type={field.field_type}
               placeholder={field.placeholder || ''}
               value={formData[field.id] || ''}
               onChange={(e) => handleFieldChange(field.id, e.target.value)}
-              className={error ? 'border-destructive' : ''}
+              className={`transition-all duration-200 ${error ? 'border-destructive focus-visible:ring-destructive' : 'focus-visible:ring-primary'}`}
             />
-            {field.help_text && (
-              <p className="text-sm text-muted-foreground">{field.help_text}</p>
-            )}
-            {error && <p className="text-sm text-destructive">{error}</p>}
-          </div>
+          </FieldWrapper>
         );
 
       case 'number':
         return (
-          <div key={field.id} className="space-y-2">
-            <Label htmlFor={field.id}>
-              {field.label}
-              {field.required && <span className="text-destructive ml-1">*</span>}
-            </Label>
+          <FieldWrapper key={field.id}>
             <Input
               id={field.id}
               type="number"
               placeholder={field.placeholder || ''}
               value={formData[field.id] || ''}
               onChange={(e) => handleFieldChange(field.id, Number(e.target.value))}
-              className={error ? 'border-destructive' : ''}
+              className={`transition-all duration-200 ${error ? 'border-destructive focus-visible:ring-destructive' : 'focus-visible:ring-primary'}`}
             />
-            {field.help_text && (
-              <p className="text-sm text-muted-foreground">{field.help_text}</p>
-            )}
-            {error && <p className="text-sm text-destructive">{error}</p>}
-          </div>
+          </FieldWrapper>
         );
 
       case 'textarea':
         return (
-          <div key={field.id} className="space-y-2">
-            <Label htmlFor={field.id}>
-              {field.label}
-              {field.required && <span className="text-destructive ml-1">*</span>}
-            </Label>
+          <FieldWrapper key={field.id}>
             <Textarea
               id={field.id}
               placeholder={field.placeholder || ''}
               value={formData[field.id] || ''}
               onChange={(e) => handleFieldChange(field.id, e.target.value)}
               rows={4}
-              className={error ? 'border-destructive' : ''}
+              className={`resize-none transition-all duration-200 ${error ? 'border-destructive focus-visible:ring-destructive' : 'focus-visible:ring-primary'}`}
             />
-            {field.help_text && (
-              <p className="text-sm text-muted-foreground">{field.help_text}</p>
-            )}
-            {error && <p className="text-sm text-destructive">{error}</p>}
-          </div>
+          </FieldWrapper>
         );
 
       case 'dropdown':
         return (
-          <div key={field.id} className="space-y-2">
-            <Label htmlFor={field.id}>
-              {field.label}
-              {field.required && <span className="text-destructive ml-1">*</span>}
-            </Label>
+          <FieldWrapper key={field.id}>
             <Select
               value={formData[field.id] || ''}
               onValueChange={(value) => handleFieldChange(field.id, value)}
             >
-              <SelectTrigger className={error ? 'border-destructive' : ''}>
+              <SelectTrigger className={`transition-all duration-200 ${error ? 'border-destructive ring-offset-destructive' : ''}`}>
                 <SelectValue placeholder="Select an option" />
               </SelectTrigger>
               <SelectContent>
@@ -250,47 +249,32 @@ export default function PublicForm() {
                 ))}
               </SelectContent>
             </Select>
-            {field.help_text && (
-              <p className="text-sm text-muted-foreground">{field.help_text}</p>
-            )}
-            {error && <p className="text-sm text-destructive">{error}</p>}
-          </div>
+          </FieldWrapper>
         );
 
       case 'radio':
         return (
-          <div key={field.id} className="space-y-2">
-            <Label>
-              {field.label}
-              {field.required && <span className="text-destructive ml-1">*</span>}
-            </Label>
+          <FieldWrapper key={field.id}>
             <RadioGroup
               value={formData[field.id] || ''}
               onValueChange={(value) => handleFieldChange(field.id, value)}
+              className="space-y-2"
             >
               {field.options?.map((option) => (
                 <div key={option.value} className="flex items-center space-x-2">
                   <RadioGroupItem value={option.value} id={`${field.id}-${option.value}`} />
-                  <Label htmlFor={`${field.id}-${option.value}`} className="font-normal">
+                  <Label htmlFor={`${field.id}-${option.value}`} className="font-normal cursor-pointer">
                     {option.label}
                   </Label>
                 </div>
               ))}
             </RadioGroup>
-            {field.help_text && (
-              <p className="text-sm text-muted-foreground">{field.help_text}</p>
-            )}
-            {error && <p className="text-sm text-destructive">{error}</p>}
-          </div>
+          </FieldWrapper>
         );
 
       case 'checkbox':
         return (
-          <div key={field.id} className="space-y-2">
-            <Label>
-              {field.label}
-              {field.required && <span className="text-destructive ml-1">*</span>}
-            </Label>
+          <FieldWrapper key={field.id}>
             <div className="space-y-2">
               {field.options?.map((option) => (
                 <div key={option.value} className="flex items-center space-x-2">
@@ -305,38 +289,26 @@ export default function PublicForm() {
                       handleFieldChange(field.id, updated);
                     }}
                   />
-                  <Label htmlFor={`${field.id}-${option.value}`} className="font-normal">
+                  <Label htmlFor={`${field.id}-${option.value}`} className="font-normal cursor-pointer">
                     {option.label}
                   </Label>
                 </div>
               ))}
             </div>
-            {field.help_text && (
-              <p className="text-sm text-muted-foreground">{field.help_text}</p>
-            )}
-            {error && <p className="text-sm text-destructive">{error}</p>}
-          </div>
+          </FieldWrapper>
         );
 
       case 'date':
         return (
-          <div key={field.id} className="space-y-2">
-            <Label htmlFor={field.id}>
-              {field.label}
-              {field.required && <span className="text-destructive ml-1">*</span>}
-            </Label>
+          <FieldWrapper key={field.id}>
             <Input
               id={field.id}
               type="date"
               value={formData[field.id] || ''}
               onChange={(e) => handleFieldChange(field.id, e.target.value)}
-              className={error ? 'border-destructive' : ''}
+              className={`transition-all duration-200 ${error ? 'border-destructive focus-visible:ring-destructive' : 'focus-visible:ring-primary'}`}
             />
-            {field.help_text && (
-              <p className="text-sm text-muted-foreground">{field.help_text}</p>
-            )}
-            {error && <p className="text-sm text-destructive">{error}</p>}
-          </div>
+          </FieldWrapper>
         );
 
       default:
@@ -346,18 +318,24 @@ export default function PublicForm() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="flex items-center justify-center min-h-screen bg-gray-50/50">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
       </div>
     );
   }
 
   if (!form) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <Card className="max-w-md">
-          <CardContent className="p-6 text-center">
-            <p className="text-muted-foreground">Form not found or not available</p>
+      <div className="flex items-center justify-center min-h-screen bg-gray-50/50 p-4">
+        <Card className="max-w-md w-full shadow-lg">
+          <CardContent className="p-8 text-center space-y-4">
+            <div className="bg-destructive/10 p-3 rounded-full w-fit mx-auto">
+              <AlertCircle className="h-8 w-8 text-destructive" />
+            </div>
+            <h2 className="text-xl font-semibold">Form Unavailable</h2>
+            <p className="text-muted-foreground">
+              This form is either not found, not published, or has been taken down.
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -366,47 +344,89 @@ export default function PublicForm() {
 
   if (submitted) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-background p-4">
-        <Card className="max-w-md w-full">
-          <CardContent className="p-8 text-center">
-            <CheckCircle2 className="h-16 w-16 text-green-600 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold mb-2">Thank You!</h2>
-            <p className="text-muted-foreground">
-              {form.settings?.success_message || 'Your submission has been received successfully.'}
-            </p>
-            {form.settings?.redirect_url && (
-              <p className="text-sm text-muted-foreground mt-4">
-                Redirecting...
-              </p>
-            )}
-          </CardContent>
-        </Card>
+      <div className="flex items-center justify-center min-h-screen bg-gray-50/50 p-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="w-full max-w-md"
+        >
+          <Card className="shadow-xl border-t-4 border-t-green-600">
+            <CardContent className="p-12 text-center space-y-6">
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.1 }}
+                className="bg-green-100 p-4 rounded-full w-fit mx-auto"
+              >
+                <CheckCircle2 className="h-12 w-12 text-green-600" />
+              </motion.div>
+              <div className="space-y-2">
+                <h2 className="text-2xl font-bold tracking-tight">Thank You!</h2>
+                <p className="text-muted-foreground">
+                  {form.settings?.success_message || 'Your submission has been received successfully.'}
+                </p>
+              </div>
+              {form.settings?.redirect_url && (
+                <div className="pt-4 border-t">
+                  <p className="text-sm text-muted-foreground animate-pulse">
+                    Redirecting you shortly...
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background py-12 px-4">
-      <div className="max-w-2xl mx-auto">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl">{form.title}</CardTitle>
+    <div className="min-h-screen bg-gray-50/50 py-12 px-4 sm:px-6 lg:px-8">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="max-w-2xl mx-auto"
+      >
+        <Card className="shadow-xl border-t-8 border-t-primary">
+          <CardHeader className="space-y-4 pb-8 border-b bg-card/50">
+            <CardTitle className="text-3xl font-bold text-center tracking-tight">{form.title}</CardTitle>
             {form.description && (
-              <CardDescription className="text-base">{form.description}</CardDescription>
+              <CardDescription className="text-center text-lg max-w-xl mx-auto">
+                {form.description}
+              </CardDescription>
             )}
           </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {fields.map((field) => renderField(field))}
-              
-              <Button type="submit" className="w-full" disabled={submitting}>
-                {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {form.settings?.submit_button_text || 'Submit'}
-              </Button>
+          <CardContent className="p-8">
+            <form onSubmit={handleSubmit} className="space-y-8">
+              <div className="space-y-6">
+                {fields.map((field) => renderField(field))}
+              </div>
+
+              <div className="pt-4">
+                <Button type="submit" size="lg" className="w-full text-lg h-12 transition-all hover:scale-[1.01]" disabled={submitting}>
+                  {submitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      Submitting...
+                    </>
+                  ) : (
+                    form.settings?.submit_button_text || 'Submit Form'
+                  )}
+                </Button>
+              </div>
             </form>
           </CardContent>
+          <CardFooter className="bg-muted/30 border-t py-4">
+            <div className="w-full text-center">
+              <p className="text-xs text-muted-foreground">
+                Powered by <span className="font-semibold text-primary">Form Builder</span>
+              </p>
+            </div>
+          </CardFooter>
         </Card>
-      </div>
+      </motion.div>
     </div>
   );
 }

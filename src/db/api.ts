@@ -8,7 +8,7 @@ export const formsApi = {
       .from('forms')
       .select('*, team:teams(*)')
       .order('updated_at', { ascending: false });
-    
+
     if (error) throw error;
     return Array.isArray(data) ? data : [];
   },
@@ -19,7 +19,7 @@ export const formsApi = {
       .select('*, team:teams(*), fields:form_fields(*)')
       .eq('id', id)
       .maybeSingle();
-    
+
     if (error) throw error;
     return data;
   },
@@ -40,7 +40,7 @@ export const formsApi = {
       })
       .select()
       .single();
-    
+
     if (error) throw error;
     return data;
   },
@@ -55,7 +55,7 @@ export const formsApi = {
       .eq('id', id)
       .select()
       .single();
-    
+
     if (error) throw error;
     return data;
   },
@@ -65,7 +65,7 @@ export const formsApi = {
       .from('forms')
       .delete()
       .eq('id', id);
-    
+
     if (error) throw error;
   },
 
@@ -75,9 +75,21 @@ export const formsApi = {
       .select('*, fields:form_fields(*)')
       .eq('is_template', true)
       .order('created_at', { ascending: false });
-    
+
     if (error) throw error;
     return Array.isArray(data) ? data : [];
+  },
+
+  async moveToTeam(id: string, team_id: string | null) {
+    const { data, error } = await supabase
+      .from('forms')
+      .update({ team_id, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
   },
 };
 
@@ -89,7 +101,7 @@ export const formFieldsApi = {
       .select('*')
       .eq('form_id', formId)
       .order('position', { ascending: true });
-    
+
     if (error) throw error;
     return Array.isArray(data) ? data : [];
   },
@@ -111,7 +123,7 @@ export const formFieldsApi = {
       })
       .select()
       .single();
-    
+
     if (error) throw error;
     return data;
   },
@@ -126,7 +138,7 @@ export const formFieldsApi = {
       .eq('id', id)
       .select()
       .single();
-    
+
     if (error) throw error;
     return data;
   },
@@ -136,7 +148,7 @@ export const formFieldsApi = {
       .from('form_fields')
       .delete()
       .eq('id', id);
-    
+
     if (error) throw error;
   },
 
@@ -148,7 +160,7 @@ export const formFieldsApi = {
         updated_at: new Date().toISOString(),
       })))
       .select();
-    
+
     if (error) throw error;
     return Array.isArray(data) ? data : [];
   },
@@ -163,7 +175,7 @@ export const submissionsApi = {
       .eq('form_id', formId)
       .order('submitted_at', { ascending: false })
       .range(offset, offset + limit - 1);
-    
+
     if (error) throw error;
     return Array.isArray(data) ? data : [];
   },
@@ -180,7 +192,7 @@ export const submissionsApi = {
       })
       .select()
       .single();
-    
+
     if (error) throw error;
     return data;
   },
@@ -190,7 +202,7 @@ export const submissionsApi = {
       .from('submissions')
       .select('*', { count: 'exact', head: true })
       .eq('form_id', formId);
-    
+
     if (error) throw error;
     return { total: count || 0 };
   },
@@ -203,7 +215,7 @@ export const teamsApi = {
       .from('teams')
       .select('*')
       .order('created_at', { ascending: false });
-    
+
     if (error) throw error;
     return Array.isArray(data) ? data : [];
   },
@@ -214,7 +226,7 @@ export const teamsApi = {
       .select('*')
       .eq('id', id)
       .maybeSingle();
-    
+
     if (error) throw error;
     return data;
   },
@@ -231,7 +243,7 @@ export const teamsApi = {
       })
       .select()
       .single();
-    
+
     if (error) throw error;
     return data;
   },
@@ -246,7 +258,7 @@ export const teamsApi = {
       .eq('id', id)
       .select()
       .single();
-    
+
     if (error) throw error;
     return data;
   },
@@ -256,7 +268,7 @@ export const teamsApi = {
       .from('teams')
       .delete()
       .eq('id', id);
-    
+
     if (error) throw error;
   },
 };
@@ -269,7 +281,7 @@ export const teamMembersApi = {
       .select('*, profile:profiles(*)')
       .eq('team_id', teamId)
       .order('created_at', { ascending: false });
-    
+
     if (error) throw error;
     return Array.isArray(data) ? data : [];
   },
@@ -284,7 +296,7 @@ export const teamMembersApi = {
       })
       .select()
       .single();
-    
+
     if (error) throw error;
     return data;
   },
@@ -296,7 +308,7 @@ export const teamMembersApi = {
       .eq('id', id)
       .select()
       .single();
-    
+
     if (error) throw error;
     return data;
   },
@@ -306,7 +318,7 @@ export const teamMembersApi = {
       .from('team_members')
       .delete()
       .eq('id', id);
-    
+
     if (error) throw error;
   },
 };
@@ -319,7 +331,7 @@ export const emailConfigsApi = {
       .select('*')
       .eq('form_id', formId)
       .maybeSingle();
-    
+
     if (error) throw error;
     return data;
   },
@@ -337,7 +349,7 @@ export const emailConfigsApi = {
       })
       .select()
       .single();
-    
+
     if (error) throw error;
     return data;
   },
@@ -351,7 +363,7 @@ export const webhooksApi = {
       .select('*')
       .eq('form_id', formId)
       .order('created_at', { ascending: false });
-    
+
     if (error) throw error;
     return Array.isArray(data) ? data : [];
   },
@@ -367,7 +379,7 @@ export const webhooksApi = {
       })
       .select()
       .single();
-    
+
     if (error) throw error;
     return data;
   },
@@ -382,7 +394,7 @@ export const webhooksApi = {
       .eq('id', id)
       .select()
       .single();
-    
+
     if (error) throw error;
     return data;
   },
@@ -392,7 +404,7 @@ export const webhooksApi = {
       .from('webhooks')
       .delete()
       .eq('id', id);
-    
+
     if (error) throw error;
   },
 };
@@ -404,7 +416,7 @@ export const profilesApi = {
       .from('profiles')
       .select('*')
       .order('created_at', { ascending: false });
-    
+
     if (error) throw error;
     return Array.isArray(data) ? data : [];
   },
@@ -416,7 +428,43 @@ export const profilesApi = {
       .eq('id', userId)
       .select()
       .single();
-    
+
+    if (error) throw error;
+    return data;
+  },
+
+  async updateStatus(userId: string, updates: {
+    is_premium?: boolean;
+    upgrade_requested?: boolean;
+    payment_method?: string | null;
+    transaction_id?: string | null;
+    amount?: number | null;
+    payment_details?: Record<string, any> | null;
+    payment_proof_url?: string | null;
+    full_name?: string | null;
+    subscription_start_date?: string | null;
+    subscription_end_date?: string | null;
+    subscription_status?: string | null;
+    subscription_amount?: number | null;
+  }) {
+    const { data, error } = await supabase
+      .from('profiles')
+      .update(updates)
+      .eq('id', userId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  async getByEmail(email: string) {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('email', email)
+      .maybeSingle();
+
     if (error) throw error;
     return data;
   },

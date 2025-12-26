@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSubscriptionCheck } from '@/hooks/useSubscriptionCheck';
 
 interface RouteGuardProps {
   children: React.ReactNode;
@@ -23,6 +24,9 @@ export function RouteGuard({ children }: RouteGuardProps) {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Check subscription status on every route change
+  useSubscriptionCheck();
 
   useEffect(() => {
     if (loading) return;

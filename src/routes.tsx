@@ -1,4 +1,5 @@
 import Dashboard from './pages/Dashboard';
+import CreateForm from './pages/CreateForm';
 import Forms from './pages/Forms';
 import FormBuilder from './pages/FormBuilder';
 import Submissions from './pages/Submissions';
@@ -19,6 +20,11 @@ interface RouteConfig {
 }
 
 const routes: RouteConfig[] = [
+  {
+    name: 'Create Form',
+    path: '/forms/new',
+    element: <CreateForm />,
+  },
   {
     name: 'Dashboard',
     path: '/',

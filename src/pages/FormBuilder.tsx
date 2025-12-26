@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import {
   Select,
   SelectContent,
@@ -19,7 +20,8 @@ import { formsApi, formFieldsApi } from '@/db/api';
 import { FieldLibrary } from '@/components/form-builder/FieldLibrary';
 import { FormCanvas } from '@/components/form-builder/FormCanvas';
 import { FieldProperties } from '@/components/form-builder/FieldProperties';
-import { ArrowLeft, Save, Eye, Loader2 } from 'lucide-react';
+import { PremiumLock } from '@/components/common/PremiumLock';
+import { ArrowLeft, Save, Eye, Loader2, Palette, Plug, Palette as PaletteIcon, Type, Image as ImageIcon, Bell, Webhook as WebhookIcon } from 'lucide-react';
 import type { Form, FormField, FieldType } from '@/types';
 
 export default function FormBuilder() {
@@ -84,7 +86,7 @@ export default function FormBuilder() {
         return;
       }
       setForm(formData);
-      
+
       const fieldsData = await formFieldsApi.getByFormId(formId);
       setFields(fieldsData);
     } catch (error) {
@@ -145,9 +147,9 @@ export default function FormBuilder() {
         required: false,
         options: ['dropdown', 'checkbox', 'radio'].includes(draggedFieldType)
           ? [
-              { label: 'Option 1', value: 'option_1' },
-              { label: 'Option 2', value: 'option_2' },
-            ]
+            { label: 'Option 1', value: 'option_1' },
+            { label: 'Option 2', value: 'option_2' },
+          ]
           : null,
       });
 
@@ -286,106 +288,209 @@ export default function FormBuilder() {
 
         {/* Builder Content */}
         <div className="flex-1 overflow-hidden">
-          <Tabs defaultValue="build" className="h-full">
+          <Tabs defaultValue="build" className="h-full flex flex-col">
             <div className="border-b px-6">
               <TabsList>
                 <TabsTrigger value="build">Build</TabsTrigger>
+                <TabsTrigger value="design" className="gap-2"><Palette className="h-4 w-4" />Design</TabsTrigger>
+                <TabsTrigger value="integrations" className="gap-2"><Plug className="h-4 w-4" />Integrations</TabsTrigger>
                 <TabsTrigger value="settings">Settings</TabsTrigger>
               </TabsList>
             </div>
 
-            <TabsContent value="build" className="h-full m-0 p-0">
-              <div className="grid grid-cols-12 gap-6 p-6 h-full overflow-auto">
-                {/* Field Library */}
-                <div className="col-span-12 lg:col-span-3">
-                  <FieldLibrary onFieldDragStart={handleFieldDragStart} />
-                </div>
+            <div className="flex-1 overflow-auto">
+              <TabsContent value="build" className="h-full m-0 p-0">
+                <div className="grid grid-cols-12 gap-6 p-6 h-full overflow-auto">
+                  {/* Field Library */}
+                  <div className="col-span-12 lg:col-span-3">
+                    <FieldLibrary onFieldDragStart={handleFieldDragStart} />
+                  </div>
 
-                {/* Form Canvas */}
-                <div className="col-span-12 lg:col-span-6">
-                  <FormCanvas
-                    fields={fields}
-                    selectedFieldId={selectedFieldId}
-                    onFieldSelect={setSelectedFieldId}
-                    onFieldDelete={handleFieldDelete}
-                    onFieldReorder={handleFieldReorder}
-                    onDrop={handleDrop}
-                    onDragOver={handleDragOver}
-                  />
-                </div>
+                  {/* Form Canvas */}
+                  <div className="col-span-12 lg:col-span-6">
+                    <FormCanvas
+                      fields={fields}
+                      selectedFieldId={selectedFieldId}
+                      onFieldSelect={setSelectedFieldId}
+                      onFieldDelete={handleFieldDelete}
+                      onFieldReorder={handleFieldReorder}
+                      onDrop={handleDrop}
+                      onDragOver={handleDragOver}
+                    />
+                  </div>
 
-                {/* Field Properties */}
-                <div className="col-span-12 lg:col-span-3">
-                  <FieldProperties
-                    field={selectedField}
-                    onUpdate={(updates) =>
-                      selectedField && handleFieldUpdate(selectedField.id, updates)
-                    }
-                  />
+                  {/* Field Properties */}
+                  <div className="col-span-12 lg:col-span-3">
+                    <FieldProperties
+                      field={selectedField}
+                      onUpdate={(updates) =>
+                        selectedField && handleFieldUpdate(selectedField.id, updates)
+                      }
+                    />
+                  </div>
                 </div>
-              </div>
-            </TabsContent>
+              </TabsContent>
 
-            <TabsContent value="settings" className="p-6 space-y-6">
-              <div className="max-w-2xl space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="form-description">Description</Label>
-                  <Textarea
-                    id="form-description"
-                    value={form.description || ''}
-                    onChange={(e) => setForm({ ...form, description: e.target.value || null })}
-                    placeholder="Add a description for your form"
-                    rows={3}
-                  />
-                </div>
+              <TabsContent value="design" className="p-6 m-0 h-full overflow-auto">
+                <PremiumLock title="Custom Branding" description="Upgrade to customize colors, fonts, and add your logo.">
+                  <div className="max-w-xl mx-auto space-y-8">
+                    <div className="space-y-4">
+                      <h3 className="font-semibold text-lg flex items-center gap-2">
+                        <PaletteIcon className="h-5 w-5" /> Brand Colors
+                      </h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Primary Color</Label>
+                          <div className="h-10 w-full bg-primary rounded-md border flex items-center justify-center text-primary-foreground font-mono text-sm">#0F172A</div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Background Color</Label>
+                          <div className="h-10 w-full bg-background rounded-md border flex items-center justify-center text-foreground font-mono text-sm">#FFFFFF</div>
+                        </div>
+                      </div>
+                    </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="submit-button">Submit Button Text</Label>
-                  <Input
-                    id="submit-button"
-                    value={form.settings?.submit_button_text || 'Submit'}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        settings: { ...form.settings, submit_button_text: e.target.value },
-                      })
-                    }
-                    placeholder="Submit"
-                  />
-                </div>
+                    <div className="space-y-4">
+                      <h3 className="font-semibold text-lg flex items-center gap-2">
+                        <Type className="h-5 w-5" /> Typography
+                      </h3>
+                      <div className="space-y-2">
+                        <Label>Font Family</Label>
+                        <Select disabled>
+                          <SelectTrigger><SelectValue placeholder="Inter (Default)" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="inter">Inter</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="success-message">Success Message</Label>
-                  <Textarea
-                    id="success-message"
-                    value={form.settings?.success_message || ''}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        settings: { ...form.settings, success_message: e.target.value },
-                      })
-                    }
-                    placeholder="Thank you for your submission!"
-                    rows={2}
-                  />
-                </div>
+                    <div className="space-y-4">
+                      <h3 className="font-semibold text-lg flex items-center gap-2">
+                        <ImageIcon className="h-5 w-5" /> Logo & Assets
+                      </h3>
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label>Logo</Label>
+                          <div className="border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center text-center">
+                            <Button variant="secondary" size="sm">Upload Logo</Button>
+                            <p className="text-xs text-muted-foreground mt-2">Recommended: 200x50px</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between space-x-2 border p-4 rounded-lg">
+                          <div className="space-y-0.5">
+                            <Label className="text-base">Remove 'Powered By'</Label>
+                            <p className="text-xs text-muted-foreground">
+                              Hide the FormBuilder branding in the footer
+                            </p>
+                          </div>
+                          <Switch disabled />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </PremiumLock>
+              </TabsContent>
 
-                <div className="space-y-2">
-                  <Label htmlFor="redirect-url">Redirect URL (optional)</Label>
-                  <Input
-                    id="redirect-url"
-                    value={form.settings?.redirect_url || ''}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        settings: { ...form.settings, redirect_url: e.target.value },
-                      })
-                    }
-                    placeholder="https://example.com/thank-you"
-                  />
+              <TabsContent value="integrations" className="p-6 m-0 h-full overflow-auto">
+                <PremiumLock title="Integrations" description="Connect your form to your favorite tools and automate workflows.">
+                  <div className="max-w-2xl mx-auto space-y-6">
+                    <div className="border rounded-lg p-6 flex items-start gap-4 hover:shadow-sm transition-shadow">
+                      <div className="p-3 bg-blue-100 rounded-lg">
+                        <Bell className="h-6 w-6 text-blue-600" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="font-semibold">Email Notifications</h3>
+                          <Switch disabled />
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Receive an email every time a new submission is received.
+                        </p>
+                        <Input placeholder="Enter email address" disabled />
+                      </div>
+                    </div>
+
+                    <div className="border rounded-lg p-6 flex items-start gap-4 hover:shadow-sm transition-shadow">
+                      <div className="p-3 bg-orange-100 rounded-lg">
+                        <WebhookIcon className="h-6 w-6 text-orange-600" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="font-semibold">Webhooks</h3>
+                          <Switch disabled />
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Send submission data to an external URL (e.g. Zapier, Slack).
+                        </p>
+                        <Input placeholder="https://api.example.com/webhook" disabled />
+                      </div>
+                    </div>
+                  </div>
+                </PremiumLock>
+              </TabsContent>
+
+              <TabsContent value="settings" className="p-6 space-y-6 overflow-auto">
+                <div className="max-w-2xl space-y-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="form-description">Description</Label>
+                    <Textarea
+                      id="form-description"
+                      value={form.description || ''}
+                      onChange={(e) => setForm({ ...form, description: e.target.value || null })}
+                      placeholder="Add a description for your form"
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="submit-button">Submit Button Text</Label>
+                    <Input
+                      id="submit-button"
+                      value={form.settings?.submit_button_text || 'Submit'}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          settings: { ...form.settings, submit_button_text: e.target.value },
+                        })
+                      }
+                      placeholder="Submit"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="success-message">Success Message</Label>
+                    <Textarea
+                      id="success-message"
+                      value={form.settings?.success_message || ''}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          settings: { ...form.settings, success_message: e.target.value },
+                        })
+                      }
+                      placeholder="Thank you for your submission!"
+                      rows={2}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="redirect-url">Redirect URL (optional)</Label>
+                    <Input
+                      id="redirect-url"
+                      value={form.settings?.redirect_url || ''}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          settings: { ...form.settings, redirect_url: e.target.value },
+                        })
+                      }
+                      placeholder="https://example.com/thank-you"
+                    />
+                  </div>
                 </div>
-              </div>
-            </TabsContent>
+              </TabsContent>
+            </div>
           </Tabs>
         </div>
       </div>

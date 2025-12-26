@@ -7,12 +7,25 @@ export interface Option {
 
 // User and Auth Types
 export type UserRole = 'user' | 'admin';
+export type SubscriptionStatus = 'active' | 'expired' | 'cancelled';
 
 export interface Profile {
   id: string;
   email: string | null;
   username: string | null;
   role: UserRole;
+  is_premium?: boolean;
+  upgrade_requested?: boolean;
+  payment_method?: string | null;
+  transaction_id?: string | null;
+  amount?: number | null;
+  payment_details?: Record<string, any> | null;
+  payment_proof_url?: string | null;
+  full_name?: string | null;
+  subscription_start_date?: string | null;
+  subscription_end_date?: string | null;
+  subscription_status?: SubscriptionStatus | null;
+  subscription_amount?: number | null;
   avatar_url: string | null;
   created_at: string;
   updated_at: string;
@@ -44,7 +57,7 @@ export interface TeamMember {
 // Form Types
 export type FormStatus = 'draft' | 'published' | 'archived';
 
-export type FieldType = 
+export type FieldType =
   | 'text'
   | 'email'
   | 'number'

@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { AppLayout } from '@/components/layouts/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Table,
   TableBody,
@@ -14,7 +15,8 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { formsApi, formFieldsApi, submissionsApi } from '@/db/api';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Download, FileText } from 'lucide-react';
+import { ArrowLeft, Download, FileText, PieChart, BarChart2, Calendar } from 'lucide-react';
+import { PremiumLock } from '@/components/common/PremiumLock';
 import type { Form, FormField, Submission } from '@/types';
 
 export default function Submissions() {
@@ -75,7 +77,7 @@ export default function Submissions() {
     }
 
     const headers = ['Submission ID', 'Submitted At', ...fields.map((f) => f.label)];
-    
+
     const rows = submissions.map((submission) => {
       const row = [
         submission.id,
@@ -148,74 +150,129 @@ export default function Submissions() {
           </Button>
         </div>
 
-        {/* Stats */}
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Submissions</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <Skeleton className="h-8 w-20 bg-muted" />
-              ) : (
-                <div className="text-2xl font-bold">{submissions.length}</div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+        <Tabs defaultValue="list" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="list">Submissions List</TabsTrigger>
+            <TabsTrigger value="analytics" className="gap-2">
+              <PieChart className="h-4 w-4" />
+              Analytics & Insights
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Submissions Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>All Submissions</CardTitle>
-            <CardDescription>View and manage form submissions</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="space-y-3">
-                {[1, 2, 3].map((i) => (
-                  <Skeleton key={i} className="h-16 w-full bg-muted" />
-                ))}
-              </div>
-            ) : submissions.length === 0 ? (
-              <div className="text-center py-12">
-                <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
-                <h3 className="mt-4 text-lg font-semibold">No submissions yet</h3>
-                <p className="text-muted-foreground mt-2">
-                  Submissions will appear here once users fill out your form
-                </p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Submitted At</TableHead>
-                      {fields.map((field) => (
-                        <TableHead key={field.id}>{field.label}</TableHead>
-                      ))}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {submissions.map((submission) => (
-                      <TableRow key={submission.id}>
-                        <TableCell className="whitespace-nowrap">
-                          {new Date(submission.submitted_at).toLocaleString()}
-                        </TableCell>
-                        {fields.map((field) => (
-                          <TableCell key={field.id}>
-                            {formatValue(submission.data[field.id])}
-                          </TableCell>
-                        ))}
-                      </TableRow>
+          <TabsContent value="list" className="space-y-6">
+            {/* Stats */}
+            <div className="grid gap-4 md:grid-cols-3">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Submissions</CardTitle>
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  {loading ? (
+                    <Skeleton className="h-8 w-20 bg-muted" />
+                  ) : (
+                    <div className="text-2xl font-bold">{submissions.length}</div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Submissions Table */}
+            <Card>
+              <CardHeader>
+                <CardTitle>All Submissions</CardTitle>
+                <CardDescription>View and manage form submissions</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="space-y-3">
+                    {[1, 2, 3].map((i) => (
+                      <Skeleton key={i} className="h-16 w-full bg-muted" />
                     ))}
-                  </TableBody>
-                </Table>
+                  </div>
+                ) : submissions.length === 0 ? (
+                  <div className="text-center py-12">
+                    <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
+                    <h3 className="mt-4 text-lg font-semibold">No submissions yet</h3>
+                    <p className="text-muted-foreground mt-2">
+                      Submissions will appear here once users fill out your form
+                    </p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Submitted At</TableHead>
+                          {fields.map((field) => (
+                            <TableHead key={field.id}>{field.label}</TableHead>
+                          ))}
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {submissions.map((submission) => (
+                          <TableRow key={submission.id}>
+                            <TableCell className="whitespace-nowrap">
+                              {new Date(submission.submitted_at).toLocaleString()}
+                            </TableCell>
+                            {fields.map((field) => (
+                              <TableCell key={field.id}>
+                                {formatValue(submission.data[field.id])}
+                              </TableCell>
+                            ))}
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="analytics">
+            <PremiumLock
+              title="Premium Analytics"
+              description="Unlock detailed insights, visual charts, and trend analysis for your form submissions."
+            >
+              <div className="grid gap-6 md:grid-cols-2">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <BarChart2 className="h-5 w-5" />
+                      Submissions Over Time
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="h-[300px] flex items-center justify-center bg-muted/50 rounded-lg">
+                    <div className="text-muted-foreground">Chart: Daily Submissions Volume</div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <PieChart className="h-5 w-5" />
+                      Device Breakdown
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="h-[300px] flex items-center justify-center bg-muted/50 rounded-lg">
+                    <div className="text-muted-foreground">Chart: Mobile vs Desktop</div>
+                  </CardContent>
+                </Card>
+                <Card className="md:col-span-2">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Calendar className="h-5 w-5" />
+                      Completion Rate (Last 30 Days)
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="h-[200px] flex items-center justify-center bg-muted/50 rounded-lg">
+                    <div className="text-muted-foreground">Chart: Form Views vs Completions</div>
+                  </CardContent>
+                </Card>
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </PremiumLock>
+          </TabsContent>
+        </Tabs>
       </div>
     </AppLayout>
   );
