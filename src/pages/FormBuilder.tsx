@@ -21,8 +21,8 @@ import { FieldLibrary } from '@/components/form-builder/FieldLibrary';
 import { FormCanvas } from '@/components/form-builder/FormCanvas';
 import { FieldProperties } from '@/components/form-builder/FieldProperties';
 import { ArrowLeft, Save, Eye, Loader2, Image as ImageIcon, Bell, Webhook as WebhookIcon, Zap, Trash2, Undo2, Redo2, CheckCircle2, Layout } from 'lucide-react';
-import type { Form, FormField, EmailConfig, Webhook } from '@/types';
-import { ShareModal } from '@/components/form-builder/ShareModal';
+import type { Form, FormField, EmailConfig, Webhook, FieldType } from '@/types';
+import { EmbedCodeDialog as ShareModal } from '@/components/form-builder/EmbedCodeDialog';
 
 export default function FormBuilder() {
   const { id } = useParams<{ id: string }>();
@@ -38,6 +38,7 @@ export default function FormBuilder() {
   const [saving, setSaving] = useState(false);
   const [emailConfig, setEmailConfig] = useState<EmailConfig | null>(null);
   const [webhooks, setWebhooks] = useState<Webhook[]>([]);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   const isNewForm = id === 'new';
 
@@ -433,7 +434,7 @@ export default function FormBuilder() {
                 <main className="flex-1 bg-slate-50/50 h-full overflow-y-auto px-12 py-12 custom-scrollbar">
                   <div className="max-w-3xl mx-auto">
                     <FormCanvas
-                      fields={form.fields}
+                      fields={fields}
                       selectedFieldId={selectedFieldId}
                       onFieldSelect={setSelectedFieldId}
                       onFieldDelete={handleFieldDelete}
@@ -450,7 +451,7 @@ export default function FormBuilder() {
                 <aside className="w-[360px] border-l bg-slate-50/30 h-full overflow-y-auto custom-scrollbar shrink-0">
                   <FieldProperties
                     field={selectedField}
-                    fields={form.fields}
+                    fields={fields}
                     onUpdate={(updates) =>
                       selectedField && handleFieldUpdate(selectedField.id, updates)
                     }
