@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { PaymentModal } from '@/components/payment/PaymentModal';
 import {
   Dialog,
   DialogContent,
@@ -39,7 +38,7 @@ export default function Teams() {
   const [inviteEmail, setInviteEmail] = useState('');
   const [creating, setCreating] = useState(false);
   const [inviting, setInviting] = useState(false);
-  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+
 
   useEffect(() => {
     loadTeams();
@@ -80,10 +79,7 @@ export default function Teams() {
   }, [selectedTeam]);
 
   const handleCreateTeam = async () => {
-    if (!profile?.is_premium) {
-      setPaymentModalOpen(true);
-      return;
-    }
+
 
     if (!newTeamName.trim()) {
       toast({ title: 'Error', description: 'Please enter a team name', variant: 'destructive' });
@@ -152,11 +148,7 @@ export default function Teams() {
     <AppLayout>
       <div className="min-h-screen bg-white">
         <div className="max-w-screen-xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
-          <PaymentModal
-            open={paymentModalOpen}
-            onOpenChange={setPaymentModalOpen}
-            templateTitle="Team Creation"
-          />
+
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>

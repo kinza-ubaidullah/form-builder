@@ -16,7 +16,8 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { formsApi, formFieldsApi, submissionsApi } from '@/db/api';
-import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Loader2, CheckCircle2, AlertCircle, ArrowRight, ArrowLeft, Star, Phone, Globe, Upload, Image as ImageIcon, PenTool } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import type { Form, FormField } from '@/types';
 
@@ -30,6 +31,8 @@ export default function PublicForm() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [currentStep, setCurrentStep] = useState(0);
+  const [allSteps, setAllSteps] = useState<FormField[][]>([]);
 
   useEffect(() => {
     if (id) {
@@ -53,6 +56,16 @@ export default function PublicForm() {
 
       const fieldsData = await formFieldsApi.getByFormId(formId);
       setFields(fieldsData);
+      splitFieldsIntoSteps(fieldsData);
+
+      // Initialize default values
+      const initialData: Record<string, any> = {};
+      fieldsData.forEach(field => {
+        if (field.default_value) {
+          initialData[field.id] = field.default_value;
+        }
+      });
+      setFormData(initialData);
     } catch (error) {
       console.error('Failed to load form:', error);
       toast({
@@ -158,18 +171,78 @@ export default function PublicForm() {
     }
   };
 
+  const isFieldVisible = (field: FormField): boolean => {
+    if (!field.conditional_logic || field.conditional_logic.length === 0) return true;
+
+    return field.conditional_logic.every((logic) => {
+      const sourceValue = formData[logic.field_id];
+      let match = false;
+
+      switch (logic.operator) {
+        case 'equals':
+          match = String(sourceValue) === String(logic.value);
+          break;
+        case 'not_equals':
+          match = String(sourceValue) !== String(logic.value);
+          break;
+        case 'contains':
+          match = String(sourceValue).includes(String(logic.value));
+          break;
+        case 'greater_than':
+          match = Number(sourceValue) > Number(logic.value);
+          break;
+        case 'less_than':
+          match = Number(sourceValue) < Number(logic.value);
+          break;
+      }
+
+      return logic.action === 'show' ? match : !match;
+    });
+  };
+
+  const splitFieldsIntoSteps = (allFields: FormField[]) => {
+    const steps: FormField[][] = [];
+    let currentFields: FormField[] = [];
+
+    allFields.forEach((field) => {
+      if (field.field_type === 'page_break') {
+        steps.push(currentFields);
+        currentFields = [];
+      } else {
+        currentFields.push(field);
+      }
+    });
+
+    if (currentFields.length > 0) {
+      steps.push(currentFields);
+    }
+
+    setAllSteps(steps.length > 0 ? steps : [[]]);
+  };
+
   const renderField = (field: FormField) => {
     const error = errors[field.id];
 
+    const isVisible = isFieldVisible(field);
+    if (!isVisible) return null;
+
+    const colSpan = field.col_span || 2;
+    const isSection = field.field_type === 'section';
+
     const FieldWrapper = ({ children }: { children: React.ReactNode }) => (
-      <div className="space-y-2 animate-in fade-in slide-in-from-bottom-2 duration-500">
-        <Label htmlFor={field.id} className={`text-sm font-medium ${error ? 'text-destructive' : ''}`}>
-          {field.label}
-          {field.required && <span className="text-destructive ml-1">*</span>}
-        </Label>
+      <div className={cn(
+        "space-y-2 animate-in fade-in slide-in-from-bottom-2 duration-500",
+        isSection || colSpan === 2 ? "col-span-1 md:col-span-2" : "col-span-1"
+      )}>
+        {!isSection && (
+          <Label htmlFor={field.id} className={`text-sm font-medium ${error ? 'text-destructive' : ''}`}>
+            {field.label}
+            {field.required && <span className="text-destructive ml-1">*</span>}
+          </Label>
+        )}
         {children}
         {field.help_text && !error && (
-          <p className="text-[0.8rem] text-muted-foreground">{field.help_text}</p>
+          <p className="text-[10px] text-muted-foreground italic">Hint: {field.help_text}</p>
         )}
         <AnimatePresence>
           {error && (
@@ -177,9 +250,9 @@ export default function PublicForm() {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="flex items-center text-sm text-destructive mt-1"
+              className="flex items-center text-[10px] text-destructive mt-1 font-bold italic"
             >
-              <AlertCircle className="h-4 w-4 mr-1" />
+              <AlertCircle className="h-3 w-3 mr-1" />
               {error}
             </motion.div>
           )}
@@ -311,6 +384,155 @@ export default function PublicForm() {
           </FieldWrapper>
         );
 
+      case 'phone':
+        return (
+          <FieldWrapper key={field.id}>
+            <div className="relative">
+              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Input
+                id={field.id}
+                type="tel"
+                placeholder={field.placeholder || '+1 (555) 000-0000'}
+                value={formData[field.id] || ''}
+                onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                className={cn(
+                  "pl-10 transition-all duration-200",
+                  error ? 'border-destructive focus-visible:ring-destructive' : 'focus-visible:ring-primary'
+                )}
+              />
+            </div>
+          </FieldWrapper>
+        );
+
+      case 'url':
+        return (
+          <FieldWrapper key={field.id}>
+            <div className="relative">
+              <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Input
+                id={field.id}
+                type="url"
+                placeholder={field.placeholder || 'https://example.com'}
+                value={formData[field.id] || ''}
+                onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                className={cn(
+                  "pl-10 transition-all duration-200",
+                  error ? 'border-destructive focus-visible:ring-destructive' : 'focus-visible:ring-primary'
+                )}
+              />
+            </div>
+          </FieldWrapper>
+        );
+
+      case 'switch':
+        return (
+          <FieldWrapper key={field.id}>
+            <div className="flex items-center space-x-2 py-2">
+              <Checkbox
+                id={field.id}
+                checked={!!formData[field.id]}
+                onCheckedChange={(checked) => handleFieldChange(field.id, checked)}
+                className="h-5 w-5"
+              />
+              <Label htmlFor={field.id} className="text-sm font-medium cursor-pointer">
+                {field.placeholder || 'Enable this option'}
+              </Label>
+            </div>
+          </FieldWrapper>
+        );
+
+      case 'rating':
+        return (
+          <FieldWrapper key={field.id}>
+            <div className="flex items-center gap-1 py-2">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  onClick={() => handleFieldChange(field.id, star)}
+                  className="transition-all hover:scale-110 active:scale-95"
+                >
+                  <Star
+                    className={cn(
+                      "h-8 w-8 transition-colors",
+                      (formData[field.id] || 0) >= star
+                        ? "text-yellow-400 fill-yellow-400"
+                        : "text-slate-200"
+                    )}
+                  />
+                </button>
+              ))}
+            </div>
+          </FieldWrapper>
+        );
+
+      case 'file':
+      case 'image':
+        return (
+          <FieldWrapper key={field.id}>
+            <div className="group relative border-2 border-dashed border-slate-200 rounded-2xl p-8 hover:border-[#2196F3] hover:bg-[#2196F3]/5 transition-all cursor-pointer">
+              <input
+                type="file"
+                className="absolute inset-0 opacity-0 cursor-pointer"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleFieldChange(field.id, file.name);
+                }}
+                accept={field.field_type === 'image' ? 'image/*' : undefined}
+              />
+              <div className="flex flex-col items-center justify-center text-center space-y-2">
+                <div className="p-3 bg-slate-50 rounded-xl group-hover:bg-white transition-colors">
+                  {field.field_type === 'image' ? (
+                    <ImageIcon className="h-6 w-6 text-slate-400 group-hover:text-[#2196F3]" />
+                  ) : (
+                    <Upload className="h-6 w-6 text-slate-400 group-hover:text-[#2196F3]" />
+                  )}
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-slate-900">
+                    {formData[field.id] || `Select ${field.field_type === 'image' ? 'Image' : 'File'}`}
+                  </p>
+                  <p className="text-xs text-slate-400 font-medium italic">Click or drag to upload</p>
+                </div>
+              </div>
+            </div>
+          </FieldWrapper>
+        );
+
+      case 'signature':
+        return (
+          <FieldWrapper key={field.id}>
+            <div className="border-2 border-slate-100 rounded-2xl p-4 bg-slate-50/50">
+              <div className="h-32 bg-white rounded-xl border border-dashed border-slate-200 flex items-center justify-center mb-2">
+                <PenTool className="h-8 w-8 text-slate-200" />
+                <span className="text-[10px] font-bold text-slate-300 ml-2 italic">Sign Here</span>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-[10px] font-black uppercase tracking-widest h-8"
+                onClick={() => handleFieldChange(field.id, 'signed')}
+              >
+                Clear Signature
+              </Button>
+            </div>
+          </FieldWrapper>
+        );
+
+      case 'section':
+        return (
+          <div key={field.id} className="col-span-1 md:col-span-2 py-6">
+            <div className="flex items-center gap-4 mb-2">
+              <div className="h-[2px] flex-1 bg-gradient-to-r from-primary to-transparent opacity-20" />
+              <h3 className="text-xl font-black uppercase italic tracking-tighter text-slate-900">{field.label}</h3>
+              <div className="h-[2px] flex-1 bg-gradient-to-l from-primary to-transparent opacity-20" />
+            </div>
+            {field.help_text && (
+              <p className="text-sm text-center text-muted-foreground italic max-w-lg mx-auto">{field.help_text}</p>
+            )}
+          </div>
+        );
+
       default:
         return null;
     }
@@ -381,47 +603,129 @@ export default function PublicForm() {
     );
   }
 
+  const nextStep = () => {
+    // Validate current step
+    const currentFields = allSteps[currentStep] || [];
+    const newErrors: Record<string, string> = {};
+    currentFields.forEach((field) => {
+      const error = validateField(field, formData[field.id]);
+      if (error && isFieldVisible(field)) {
+        newErrors[field.id] = error;
+      }
+    });
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    if (currentStep < allSteps.length - 1) {
+      setCurrentStep(currentStep + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const prevStep = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50/50 py-12 px-4 sm:px-6 lg:px-8">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="max-w-2xl mx-auto"
+        className="max-w-4xl mx-auto"
       >
-        <Card className="shadow-xl border-t-8 border-t-primary">
-          <CardHeader className="space-y-4 pb-8 border-b bg-card/50">
-            <CardTitle className="text-3xl font-bold text-center tracking-tight">{form.title}</CardTitle>
+        <Card className="shadow-2xl border-t-8 border-t-primary rounded-[32px] overflow-hidden">
+          <CardHeader className="space-y-4 pb-8 border-b bg-card/50 relative">
+            {allSteps.length > 1 && (
+              <div className="absolute top-4 right-8 px-3 py-1 bg-primary/10 rounded-full">
+                <span className="text-[10px] font-black uppercase text-primary tracking-widest">
+                  Step {currentStep + 1} of {allSteps.length}
+                </span>
+              </div>
+            )}
+            <CardTitle className="text-4xl font-black text-center tracking-tighter italic text-slate-900">
+              {form.title}
+            </CardTitle>
             {form.description && (
-              <CardDescription className="text-center text-lg max-w-xl mx-auto">
+              <CardDescription className="text-center text-lg max-w-xl mx-auto font-medium italic">
                 {form.description}
               </CardDescription>
             )}
+
+            {/* Progress Bar */}
+            {allSteps.length > 1 && (
+              <div className="w-full h-1.5 bg-slate-100 rounded-full mt-6 overflow-hidden max-w-md mx-auto">
+                <motion.div
+                  className="h-full bg-primary"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${((currentStep + 1) / allSteps.length) * 100}%` }}
+                />
+              </div>
+            )}
           </CardHeader>
-          <CardContent className="p-8">
+          <CardContent className="p-10">
             <form onSubmit={handleSubmit} className="space-y-8">
-              <div className="space-y-6">
-                {fields.map((field) => renderField(field))}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-10">
+                {(allSteps[currentStep] || []).map((field) => renderField(field))}
               </div>
 
-              <div className="pt-4">
-                <Button type="submit" size="lg" className="w-full text-lg h-12 transition-all hover:scale-[1.01]" disabled={submitting}>
-                  {submitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                      Submitting...
-                    </>
-                  ) : (
-                    form.settings?.submit_button_text || 'Submit Form'
-                  )}
-                </Button>
+              <div className="pt-10 flex gap-4">
+                {currentStep > 0 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="lg"
+                    className="flex-1 h-14 text-lg font-bold rounded-2xl border-2 hover:bg-slate-50 transition-all active:scale-95"
+                    onClick={prevStep}
+                  >
+                    <ArrowLeft className="mr-2 h-5 w-5" />
+                    Previous
+                  </Button>
+                )}
+
+                {currentStep < allSteps.length - 1 ? (
+                  <Button
+                    type="button"
+                    size="lg"
+                    className="flex-[2] h-14 text-lg font-bold rounded-2xl shadow-xl shadow-primary/20 hover:shadow-primary/30 transition-all active:scale-95"
+                    onClick={nextStep}
+                  >
+                    Next Step
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                ) : (
+                  <Button
+                    type="submit"
+                    size="lg"
+                    className="flex-[2] h-14 text-lg font-bold rounded-2xl shadow-xl shadow-primary/20 hover:shadow-primary/30 transition-all active:scale-95"
+                    disabled={submitting}
+                  >
+                    {submitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                        Processing Blueprint...
+                      </>
+                    ) : (
+                      <>
+                        {form.settings?.submit_button_text || 'Finalize Submission'}
+                        <CheckCircle2 className="ml-2 h-5 w-5" />
+                      </>
+                    )}
+                  </Button>
+                )}
               </div>
             </form>
           </CardContent>
-          <CardFooter className="bg-muted/30 border-t py-4">
+          <CardFooter className="bg-slate-50 border-t py-6">
             <div className="w-full text-center">
-              <p className="text-xs text-muted-foreground">
-                Powered by <span className="font-semibold text-primary">Form Builder</span>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                Architectural Form Ecosystem <span className="text-primary mx-2">|</span> Powered by Form Builder
               </p>
             </div>
           </CardFooter>

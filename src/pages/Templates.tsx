@@ -7,13 +7,10 @@ import { Badge } from '@/components/ui/badge';
 import { formsApi, formFieldsApi } from '@/db/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { PaymentModal } from '@/components/payment/PaymentModal';
 import { motion, AnimatePresence } from 'framer-motion';
-import { cn } from '@/lib/utils';
 import { allTemplates, TemplateConfig } from '@/data/templatesData';
 import {
   ArrowRight,
-  Lock,
   Sparkles,
   Zap,
   Search,
@@ -29,48 +26,33 @@ export default function Templates() {
   const { profile } = useAuth();
   const { toast } = useToast();
   const [creating, setCreating] = useState<string | null>(null);
-  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<TemplateConfig | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [selectedPrice, setSelectedPrice] = useState<'All' | 'Free' | 'Premium'>('All');
 
   const carouselRef = useRef<HTMLDivElement>(null); // For categories
 
   const categories = useMemo(() => {
-    return ['All', ...new Set(allTemplates.map(t => t.category))];
+    return ['All', ...new Set(allTemplates.map((t: TemplateConfig) => t.category))];
   }, []);
 
   const filteredTemplates = useMemo(() => {
-    // Sort: Free first
-    const sorted = [...allTemplates].sort((a, b) => {
-      if (a.isFree === b.isFree) return 0;
-      return a.isFree ? -1 : 1;
-    });
+    // Sort: Newest or alphabetical? Keep sorted for consistency
+    const sorted = [...allTemplates];
 
     return sorted.filter(template => {
       const matchesSearch = template.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         template.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
         template.category.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesCategory = selectedCategory === 'All' || template.category === selectedCategory;
-      const matchesPrice = selectedPrice === 'All' ||
-        (selectedPrice === 'Free' && template.isFree) ||
-        (selectedPrice === 'Premium' && !template.isFree);
-      return matchesSearch && matchesCategory && matchesPrice;
+      return matchesSearch && matchesCategory;
     });
-  }, [searchQuery, selectedCategory, selectedPrice]);
+  }, [searchQuery, selectedCategory]);
 
-  const isPremium = profile?.is_premium || false;
+
 
 
   const handleTemplateClick = async (template: TemplateConfig) => {
     if (!profile || creating) return;
-
-    if (!template.isFree && !isPremium) {
-      setSelectedTemplate(template);
-      setPaymentModalOpen(true);
-      return;
-    }
 
     try {
       if (!template.id) {
@@ -87,7 +69,7 @@ export default function Templates() {
         branding: {},
       });
 
-      const fieldPromises = (template.fields || []).map(field =>
+      const fieldPromises = (template.fields || []).map((field: any) =>
         formFieldsApi.create({ ...field, form_id: newForm.id })
       );
 
@@ -116,11 +98,7 @@ export default function Templates() {
     <AppLayout>
       <div className="min-h-screen bg-white relative overflow-x-hidden">
         <div className="p-4 sm:p-6 max-w-screen-xl mx-auto space-y-8 relative z-10 pb-24">
-          <PaymentModal
-            open={paymentModalOpen}
-            onOpenChange={setPaymentModalOpen}
-            templateTitle={selectedTemplate?.title}
-          />
+
 
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -133,40 +111,21 @@ export default function Templates() {
                 <span className="text-[9px] font-black uppercase tracking-[0.4em] text-primary">The Ultimate Collection</span>
               </div>
               <h1 className="text-4xl sm:text-5xl font-black tracking-tighter text-slate-900 leading-tight">
-                Luxury <span className="text-primary italic">Vault</span>
+                Template <span className="text-primary italic">Library</span>
               </h1>
               <p className="text-slate-500 text-sm sm:text-base font-medium leading-relaxed max-w-md italic opacity-80">
-                High-performance form architecture for world-class teams. Start free, scale to <span className="text-slate-900 font-black not-italic">100+</span>.
+                Professional form architecture for every team. Explore our collection of <span className="text-slate-900 font-black not-italic">50+</span> templates.
               </p>
             </div>
 
             <div className="flex flex-col sm:flex-row items-center gap-4">
-              {isPremium && (
-                <div className="flex items-center gap-3 px-5 py-3 bg-white/80 backdrop-blur-xl rounded-2xl border border-primary/20 shadow-lg">
-                  <div className="p-2 bg-primary rounded-lg text-white">
-                    <Zap className="w-4 h-4 fill-current" />
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Membership</span>
-                    <span className="text-xs font-black text-slate-900">Elite Access Active</span>
-                  </div>
-                </div>
-              )}
+
 
               <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                 <div className="flex bg-slate-100 p-1 rounded-xl">
-                  {['All', 'Free', 'Premium'].map((p) => (
-                    <button
-                      key={p}
-                      onClick={() => setSelectedPrice(p as any)}
-                      className={cn(
-                        "px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
-                        selectedPrice === p ? "bg-white text-[#2196F3] shadow-sm" : "text-slate-500"
-                      )}
-                    >
-                      {p}
-                    </button>
-                  ))}
+                  <div className="px-4 py-1.5 bg-white text-[#2196F3] shadow-sm rounded-lg text-[10px] font-black uppercase tracking-widest">
+                    All Blueprints
+                  </div>
                 </div>
                 <div className="relative group flex-grow sm:flex-grow-0 sm:min-w-[280px]">
                   <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-[#2196F3] transition-all" />
@@ -246,7 +205,6 @@ export default function Templates() {
               <AnimatePresence mode="popLayout">
                 {filteredTemplates.map((template, idx) => {
                   const Icon = template.icon;
-                  const locked = !template.isFree && !isPremium;
                   const colorMap: Record<string, string> = {
                     blue: 'bg-blue-600', amber: 'bg-amber-500', green: 'bg-emerald-500',
                     purple: 'bg-violet-600', pink: 'bg-rose-500', indigo: 'bg-indigo-600',
@@ -275,23 +233,13 @@ export default function Templates() {
                       <Card className="group h-[380px] flex flex-col border border-slate-200 bg-white shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden rounded-xl">
                         {/* Luxe Badges */}
                         <div className="absolute top-4 right-4 z-20">
-                          {!template.isFree ? (
-                            <motion.div
-                              whileHover={{ scale: 1.05 }}
-                              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] text-white shadow-xl"
-                            >
-                              <Lock className="w-3 h-3 text-primary" />
-                              Elite
-                            </motion.div>
-                          ) : (
-                            <motion.div
-                              whileHover={{ scale: 1.05 }}
-                              className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] text-white shadow-xl"
-                            >
-                              <Sparkles className="w-3 h-3" />
-                              Open
-                            </motion.div>
-                          )}
+                          <motion.div
+                            whileHover={{ scale: 1.05 }}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] text-white shadow-xl"
+                          >
+                            <Sparkles className="w-3 h-3" />
+                            Open
+                          </motion.div>
                         </div>
 
                         {/* Art Section */}
@@ -322,7 +270,7 @@ export default function Templates() {
                           <div className="grid grid-cols-2 gap-2">
                             <div className="space-y-0 text-left">
                               <div className="text-[7px] font-black text-slate-300 uppercase tracking-[0.2em]">Structure</div>
-                              <div className="text-[9px] font-black text-slate-800 uppercase italic">Elite</div>
+                              <div className="text-[9px] font-black text-slate-800 uppercase italic">Pro</div>
                             </div>
                             <div className="space-y-0 text-left">
                               <div className="text-[7px] font-black text-slate-300 uppercase tracking-[0.2em]">Inputs</div>
@@ -333,27 +281,17 @@ export default function Templates() {
 
                         <CardFooter className="p-3 pt-0">
                           <Button
-                            className={`w-full h-[42px] rounded-lg font-black text-xs transition-all flex items-center justify-center gap-2 overflow-hidden group/btn shadow-md active:scale-95 ${locked
-                              ? 'bg-slate-100 text-slate-400 hover:bg-slate-200 border-none'
-                              : 'bg-[#2094f3] hover:bg-[#1a7bc9] text-white shadow-[#2094f3]/10'
-                              }`}
+                            className="w-full h-[42px] rounded-lg font-black text-xs transition-all flex items-center justify-center gap-2 overflow-hidden group/btn shadow-md active:scale-95 bg-[#2094f3] hover:bg-[#1a7bc9] text-white shadow-[#2094f3]/10"
                             onClick={() => handleTemplateClick(template)}
                             disabled={creating === template.id}
                           >
                             {creating === template.id ? (
                               <Loader2 className="h-4 w-4 animate-spin" />
                             ) : (
-                              locked ? (
-                                <>
-                                  <Lock className="w-3 h-3 text-primary" />
-                                  <span>Unlock Library</span>
-                                </>
-                              ) : (
-                                <>
-                                  <span>Launch Template</span>
-                                  <ArrowRight className="w-4 h-4 transition-transform group-hover/btn:translate-x-1" />
-                                </>
-                              )
+                              <>
+                                <span>Launch Template</span>
+                                <ArrowRight className="w-4 h-4 transition-transform group-hover/btn:translate-x-1" />
+                              </>
                             )}
                           </Button>
                         </CardFooter>
@@ -376,14 +314,14 @@ export default function Templates() {
                 <Search className="h-12 w-12 text-slate-100" />
                 <div className="absolute inset-0 bg-primary/5 rounded-3xl animate-ping" />
               </div>
-              <h3 className="text-3xl font-black text-slate-900 tracking-tight">Vault Entry Limited</h3>
+              <h3 className="text-3xl font-black text-slate-900 tracking-tight">Library Entry Limited</h3>
               <p className="text-slate-400 font-bold text-lg mt-4 max-w-md mx-auto leading-relaxed">Try a broader industry to refine your search results.</p>
               <Button
                 variant="outline"
                 onClick={() => { setSearchQuery(''); setSelectedCategory('All'); }}
                 className="mt-8 h-12 px-10 rounded-xl font-black text-primary border-primary/20 hover:bg-primary/5 text-lg"
               >
-                Reset Vault Filters
+                Reset Library Filters
               </Button>
             </motion.div>
           )}

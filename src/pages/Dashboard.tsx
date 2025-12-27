@@ -7,7 +7,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { formsApi, submissionsApi } from '@/db/api';
 import { useAuth } from '@/contexts/AuthContext';
-import { UpgradeModal } from '@/components/payment/UpgradeModal';
 import {
   FileText,
   Plus,
@@ -44,7 +43,7 @@ export default function Dashboard() {
     totalSubmissions: 0,
   });
   const [loading, setLoading] = useState(true);
-  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+
 
   useEffect(() => {
     loadData();
@@ -163,7 +162,6 @@ export default function Dashboard() {
 
   return (
     <AppLayout>
-      <UpgradeModal open={upgradeModalOpen} onOpenChange={setUpgradeModalOpen} />
       <div className="p-8 space-y-8 max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
@@ -174,10 +172,6 @@ export default function Dashboard() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="outline" onClick={() => setUpgradeModalOpen(true)} className="hidden md:flex border-primary/20 hover:bg-primary/5 text-primary">
-              <Zap className="mr-2 h-4 w-4" />
-              Upgrade Plan
-            </Button>
             <Button onClick={() => navigate('/forms/new')} className="shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95">
               <Plus className="mr-2 h-4 w-4" />
               Create Form
@@ -207,25 +201,10 @@ export default function Dashboard() {
                     <Skeleton className="h-8 w-20 bg-muted/20" />
                   ) : (
                     <>
-                      <div className="text-3xl font-bold text-blue-950">{stats.totalForms} <span className="text-sm font-normal text-muted-foreground">/ 5</span></div>
-                      {stats.totalForms >= 5 && (
-                        <p className="text-xs font-semibold text-red-500 mt-1 flex items-center">
-                          Limit Reached
-                        </p>
-                      )}
-                      {stats.totalForms < 5 && (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Create {5 - stats.totalForms} more free forms
-                        </p>
-                      )}
-
-                      {/* Progress Bar */}
-                      <div className="w-full h-1.5 bg-blue-100 rounded-full mt-3 overflow-hidden">
-                        <div
-                          className={`h-full rounded-full transition-all duration-500 ${stats.totalForms >= 5 ? 'bg-red-500' : 'bg-blue-500'}`}
-                          style={{ width: `${Math.min((stats.totalForms / 5) * 100, 100)}%` }}
-                        />
-                      </div>
+                      <div className="text-3xl font-bold text-blue-950">{stats.totalForms}</div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Total forms created
+                      </p>
                     </>
                   )}
                 </CardContent>
@@ -428,19 +407,6 @@ export default function Dashboard() {
                   <div>
                     <div className="font-semibold text-base">Templates</div>
                     <div className="text-xs text-muted-foreground">Use a pre-built form</div>
-                  </div>
-                </button>
-
-                <button
-                  className="w-full flex items-center p-4 rounded-xl border-2 border-dashed border-amber-200 bg-amber-50/30 text-card-foreground hover:shadow-md hover:bg-amber-50/50 hover:border-amber-400 transition-all group text-left"
-                  onClick={() => setUpgradeModalOpen(true)}
-                >
-                  <div className="h-12 w-12 rounded-full bg-amber-100 flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
-                    <Zap className="h-6 w-6 text-amber-600 fill-amber-600" />
-                  </div>
-                  <div>
-                    <div className="font-semibold text-base text-amber-900">Upgrade Plan</div>
-                    <div className="text-xs text-amber-700/80">Unlock all features</div>
                   </div>
                 </button>
               </div>

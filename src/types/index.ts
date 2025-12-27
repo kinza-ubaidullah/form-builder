@@ -105,6 +105,8 @@ export interface FormField {
   label: string;
   placeholder: string | null;
   help_text: string | null;
+  default_value: string | null;
+  col_span: number | null;
   required: boolean;
   options: FieldOption[] | null;
   validation: FieldValidation | null;

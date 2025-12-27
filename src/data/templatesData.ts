@@ -192,7 +192,7 @@ const generateTemplates = (): TemplateConfig[] => {
             description: `A high-performance ${conf.cat.toLowerCase()} workflow for elite teams.`,
             category: conf.cat,
             icon: conf.icon,
-            isFree: false,
+            isFree: true,
             fields: getFieldsForCategory(conf.cat),
             color: conf.color
         });

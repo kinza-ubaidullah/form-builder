@@ -16,7 +16,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { formsApi, formFieldsApi, submissionsApi } from '@/db/api';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Download, FileText, PieChart, BarChart2, Calendar } from 'lucide-react';
-import { PremiumLock } from '@/components/common/PremiumLock';
 import type { Form, FormField, Submission } from '@/types';
 
 export default function Submissions() {
@@ -231,46 +230,41 @@ export default function Submissions() {
           </TabsContent>
 
           <TabsContent value="analytics">
-            <PremiumLock
-              title="Premium Analytics"
-              description="Unlock detailed insights, visual charts, and trend analysis for your form submissions."
-            >
-              <div className="grid gap-6 md:grid-cols-2">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <BarChart2 className="h-5 w-5" />
-                      Submissions Over Time
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="h-[300px] flex items-center justify-center bg-muted/50 rounded-lg">
-                    <div className="text-muted-foreground">Chart: Daily Submissions Volume</div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <PieChart className="h-5 w-5" />
-                      Device Breakdown
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="h-[300px] flex items-center justify-center bg-muted/50 rounded-lg">
-                    <div className="text-muted-foreground">Chart: Mobile vs Desktop</div>
-                  </CardContent>
-                </Card>
-                <Card className="md:col-span-2">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Calendar className="h-5 w-5" />
-                      Completion Rate (Last 30 Days)
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="h-[200px] flex items-center justify-center bg-muted/50 rounded-lg">
-                    <div className="text-muted-foreground">Chart: Form Views vs Completions</div>
-                  </CardContent>
-                </Card>
-              </div>
-            </PremiumLock>
+            <div className="grid gap-6 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart2 className="h-5 w-5" />
+                    Submissions Over Time
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="h-[300px] flex items-center justify-center bg-muted/50 rounded-lg">
+                  <div className="text-muted-foreground">Chart: Daily Submissions Volume</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <PieChart className="h-5 w-5" />
+                    Device Breakdown
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="h-[300px] flex items-center justify-center bg-muted/50 rounded-lg">
+                  <div className="text-muted-foreground">Chart: Mobile vs Desktop</div>
+                </CardContent>
+              </Card>
+              <Card className="md:col-span-2">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5" />
+                    Completion Rate (Last 30 Days)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="h-[200px] flex items-center justify-center bg-muted/50 rounded-lg">
+                  <div className="text-muted-foreground">Chart: Form Views vs Completions</div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
