@@ -40,7 +40,7 @@ export default function CreateForm() {
     };
 
     return (
-        <AppLayout>
+        <AppLayout showSidebar={false}>
             <div className="relative flex-1 flex flex-col items-center justify-center p-8 bg-[#fafbfc] overflow-hidden">
                 {/* Architectural Background Elements */}
                 <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">

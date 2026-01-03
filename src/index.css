@@ -80,6 +80,8 @@ All colors MUST be HSL.
   }
 }
 
+
+
 @layer base {
   * {
     @apply border-border;
@@ -87,5 +89,75 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Custom Scrollbar Styles */
+@layer utilities {
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: linear-gradient(to bottom, #2196F3, #9C27B0);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+    transition: background 0.3s ease;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(to bottom, #1976D2, #7B1FA2);
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+/* Global scrollbar for the page */
+::-webkit-scrollbar {
+  width: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(45deg, #FF6B6B, #4ECDC4, #45B7D1);
+  background-size: 200% 200%;
+  border-radius: 6px;
+  border: 3px solid #f1f5f9;
+  animation: scrollbar-gradient 3s ease infinite;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  border: 2px solid #f1f5f9;
+}
+
+@keyframes scrollbar-gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
   }
 }

@@ -22,7 +22,7 @@ interface AuthContextType {
   profile: Profile | null;
   loading: boolean;
   signIn: (username: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (username: string, password: string) => Promise<{ error: Error | null }>;
+  signUp: (username: string, password: string, email?: string, phone?: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -52,7 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       setLoading(false);
     });
-    
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -80,15 +80,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const signUp = async (username: string, password: string) => {
+  const signUp = async (username: string, password: string, email?: string, phone?: string) => {
     try {
-      const email = `${username}@miaoda.com`;
+      const authEmail = `${username}@miaoda.com`;
       const { error } = await supabase.auth.signUp({
-        email,
+        email: authEmail,
         password,
         options: {
           data: {
             username: username,
+            contact_email: email, // Real contact email stored in metadata to avoid collision
+            phone_number: phone,
           },
         },
       });

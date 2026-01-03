@@ -12,7 +12,9 @@ export type SubscriptionStatus = 'active' | 'expired' | 'cancelled';
 export interface Profile {
   id: string;
   email: string | null;
+  contact_email?: string | null;
   username: string | null;
+  phone_number?: string | null;
   role: UserRole;
   is_premium?: boolean;
   upgrade_requested?: boolean;
@@ -130,6 +132,9 @@ export interface FormBranding {
   font_family?: string;
   border_radius?: string;
   custom_css?: string;
+  fontSize?: string; // transient or extended property
+  inputStyle?: 'flushed' | 'filled' | 'outline';
+  borderWidth?: number;
 }
 
 export interface Form {

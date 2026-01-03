@@ -102,14 +102,14 @@ export function ConditionalLogicDialog({
                     ) : (
                         <div className="space-y-4 max-h-[400px] overflow-y-auto px-1 custom-scrollbar">
                             {logic.map((item, index) => (
-                                <div key={index} className="flex gap-3 items-end p-4 bg-slate-50 rounded-2xl border-2 border-slate-100">
+                                <div key={index} className="flex gap-4 items-end p-5 bg-white rounded-2xl border border-slate-200 shadow-sm transition-all hover:shadow-md hover:border-primary/20 group/rule">
                                     <div className="flex-1 space-y-2">
-                                        <Label className="text-[10px] font-black uppercase text-slate-500">Action</Label>
+                                        <Label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 group-hover/rule:text-primary transition-colors">Action</Label>
                                         <Select
                                             value={item.action}
                                             onValueChange={(val) => updateLogic(index, { action: val as any })}
                                         >
-                                            <SelectTrigger className="h-10 rounded-xl font-bold border-2 border-white shadow-sm">
+                                            <SelectTrigger className="h-10 rounded-xl border-slate-200 bg-slate-50/50 focus:bg-white transition-all">
                                                 <SelectValue />
                                             </SelectTrigger>
                                             <SelectContent>
@@ -120,18 +120,18 @@ export function ConditionalLogicDialog({
                                     </div>
 
                                     <div className="flex-[1.5] space-y-2">
-                                        <Label className="text-[10px] font-black uppercase text-slate-500">If Field</Label>
+                                        <Label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 group-hover/rule:text-primary transition-colors">If Field</Label>
                                         <Select
                                             value={item.field_id}
                                             onValueChange={(val) => updateLogic(index, { field_id: val })}
                                         >
-                                            <SelectTrigger className="h-10 rounded-xl font-bold border-2 border-white shadow-sm">
+                                            <SelectTrigger className="h-10 rounded-xl border-slate-200 bg-slate-50/50 focus:bg-white transition-all">
                                                 <SelectValue />
                                             </SelectTrigger>
                                             <SelectContent>
                                                 {availableFields.map((f) => (
                                                     <SelectItem key={f.id} value={f.id}>
-                                                        {f.label}
+                                                        {f.label || "Untitled Field"}
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>
@@ -139,12 +139,12 @@ export function ConditionalLogicDialog({
                                     </div>
 
                                     <div className="flex-1 space-y-2">
-                                        <Label className="text-[10px] font-black uppercase text-slate-500">Operator</Label>
+                                        <Label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 group-hover/rule:text-primary transition-colors">Operator</Label>
                                         <Select
                                             value={item.operator}
                                             onValueChange={(val) => updateLogic(index, { operator: val as any })}
                                         >
-                                            <SelectTrigger className="h-10 rounded-xl font-bold border-2 border-white shadow-sm">
+                                            <SelectTrigger className="h-10 rounded-xl border-slate-200 bg-slate-50/50 focus:bg-white transition-all">
                                                 <SelectValue />
                                             </SelectTrigger>
                                             <SelectContent>
@@ -158,12 +158,12 @@ export function ConditionalLogicDialog({
                                     </div>
 
                                     <div className="flex-1 space-y-2">
-                                        <Label className="text-[10px] font-black uppercase text-slate-500">Value</Label>
+                                        <Label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 group-hover/rule:text-primary transition-colors">Value</Label>
                                         <Input
                                             value={item.value}
                                             onChange={(e) => updateLogic(index, { value: e.target.value })}
-                                            className="h-10 rounded-xl font-bold border-2 border-white shadow-sm"
-                                            placeholder="Value..."
+                                            className="h-10 rounded-xl border-slate-200 bg-slate-50/50 focus:bg-white transition-all"
+                                            placeholder="Match value..."
                                         />
                                     </div>
 
@@ -171,7 +171,7 @@ export function ConditionalLogicDialog({
                                         variant="ghost"
                                         size="icon"
                                         onClick={() => removeLogic(index)}
-                                        className="h-10 w-10 text-red-400 hover:text-red-500 hover:bg-red-50 rounded-xl"
+                                        className="h-10 w-10 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
                                     >
                                         <Trash2 className="h-4 w-4" />
                                     </Button>

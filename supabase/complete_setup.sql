@@ -29,12 +29,31 @@ CREATE TABLE profiles (
   email text,
   username text UNIQUE,
   role user_role NOT NULL DEFAULT 'user',
-  avatar_url text,
   is_premium boolean DEFAULT false,
   upgrade_requested boolean DEFAULT false,
+  payment_method text,
+  transaction_id text,
+  amount decimal(10, 2),
+  payment_details jsonb DEFAULT '{}'::jsonb,
+  payment_proof_url text,
+  full_name text,
+  subscription_start_date timestamptz,
+  subscription_end_date timestamptz,
+  subscription_status text CHECK (subscription_status IN ('active', 'expired', 'cancelled')),
+  subscription_amount decimal(10, 2) DEFAULT 20.00,
+  bonus_forms integer DEFAULT 0,
+  avatar_url text,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+
+-- Comments for profiles
+COMMENT ON COLUMN profiles.payment_details IS 'Stores method-specific data like registered mobile number, email, etc.';
+COMMENT ON COLUMN profiles.subscription_start_date IS 'When the current subscription period started';
+COMMENT ON COLUMN profiles.subscription_end_date IS 'When the current subscription period ends (30 days from start)';
+COMMENT ON COLUMN profiles.subscription_status IS 'Current subscription status: active, expired, or cancelled';
+COMMENT ON COLUMN profiles.subscription_amount IS 'Monthly subscription amount (fixed at $20.00)';
+COMMENT ON COLUMN profiles.bonus_forms IS 'One-time bonus forms awarded for early subscription renewal';
 
 -- Create teams table
 CREATE TABLE teams (
@@ -87,9 +106,13 @@ CREATE TABLE form_fields (
   validation jsonb,
   conditional_logic jsonb,
   position integer NOT NULL,
+  col_span integer DEFAULT 4,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+
+-- Add description for col_span
+COMMENT ON COLUMN form_fields.col_span IS 'Grid column span (1-4) for layout control';
 
 -- Create submissions table
 CREATE TABLE submissions (
@@ -140,6 +163,9 @@ CREATE INDEX idx_team_members_user_id ON team_members(user_id);
 -- Create indexes for premium features
 CREATE INDEX IF NOT EXISTS idx_profiles_upgrade_requested ON profiles(upgrade_requested);
 CREATE INDEX IF NOT EXISTS idx_profiles_is_premium ON profiles(is_premium);
+CREATE INDEX IF NOT EXISTS idx_profiles_transaction_id ON profiles(transaction_id);
+CREATE INDEX IF NOT EXISTS idx_profiles_subscription_status ON profiles(subscription_status);
+CREATE INDEX IF NOT EXISTS idx_profiles_subscription_end_date ON profiles(subscription_end_date);
 
 -- Create helper function to check if user is admin
 CREATE OR REPLACE FUNCTION is_admin(uid uuid)
@@ -296,3 +322,20 @@ CREATE POLICY "Users can manage webhooks of their forms" ON webhooks
 CREATE OR REPLACE VIEW public_profiles AS
   SELECT id, username, avatar_url, role FROM profiles;
 
+-- Create storage setup
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('uploads', 'uploads', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Storage policies
+CREATE POLICY "Public Access"
+  ON storage.objects FOR SELECT
+  USING ( bucket_id = 'uploads' );
+
+CREATE POLICY "Authenticated Users can upload"
+  ON storage.objects FOR INSERT
+  WITH CHECK ( bucket_id = 'uploads' AND auth.role() = 'authenticated' );
+  
+CREATE POLICY "Public Uploads"
+  ON storage.objects FOR INSERT
+  WITH CHECK ( bucket_id = 'uploads' );

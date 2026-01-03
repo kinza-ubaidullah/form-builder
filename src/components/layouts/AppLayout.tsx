@@ -9,13 +9,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { 
-  LayoutDashboard, 
-  FileText, 
-  Users, 
-  Settings, 
-  LogOut, 
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from '@/components/ui/sheet';
+import {
+  LayoutDashboard,
+  FileText,
+  Users,
+  Settings,
+  LogOut,
   User,
   Menu,
   Shield,
@@ -25,6 +25,7 @@ import { cn } from '@/lib/utils';
 
 interface AppLayoutProps {
   children: React.ReactNode;
+  showSidebar?: boolean;
 }
 
 const navigation = [
@@ -34,7 +35,7 @@ const navigation = [
   { name: 'Teams', href: '/teams', icon: Users },
 ];
 
-export function AppLayout({ children }: AppLayoutProps) {
+export function AppLayout({ children, showSidebar = true }: AppLayoutProps) {
   const { profile, signOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
@@ -91,87 +92,95 @@ export function AppLayout({ children }: AppLayoutProps) {
   return (
     <div className="flex min-h-screen w-full">
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:block w-64 border-r bg-card shrink-0">
-        <div className="flex h-full flex-col">
-          <div className="flex h-16 items-center border-b px-6">
-            <Link to="/" className="flex items-center gap-2 font-bold text-lg">
-              <FileText className="h-6 w-6 text-primary" />
-              Form Builder
-            </Link>
-          </div>
-          <nav className="flex-1 space-y-1 p-4">
-            <NavLinks />
-          </nav>
-          <div className="border-t p-4">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="w-full justify-start">
-                  <User className="mr-2 h-4 w-4" />
-                  <span className="truncate">{profile?.username || 'User'}</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium">{profile?.username}</p>
-                    <p className="text-xs text-muted-foreground capitalize">{profile?.role}</p>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link to="/settings">
-                    <Settings className="mr-2 h-4 w-4" />
-                    Settings
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sign Out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <div className="flex flex-1 flex-col">
-        {/* Mobile Header */}
-        <header className="lg:hidden flex h-16 items-center gap-4 border-b bg-card px-4">
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <Menu className="h-5 w-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-64 p-0">
-              <div className="flex h-full flex-col">
-                <div className="flex h-16 items-center border-b px-6">
-                  <Link to="/" className="flex items-center gap-2 font-bold text-lg">
-                    <FileText className="h-6 w-6 text-primary" />
-                    Form Builder
-                  </Link>
-                </div>
-                <nav className="flex-1 space-y-1 p-4">
-                  <NavLinks />
-                </nav>
-                <div className="border-t p-4">
-                  <div className="flex items-center gap-3 px-3 py-2">
-                    <User className="h-4 w-4" />
-                    <div className="flex flex-col">
-                      <span className="text-sm font-medium">{profile?.username}</span>
-                      <span className="text-xs text-muted-foreground capitalize">{profile?.role}</span>
+      {showSidebar && (
+        <aside className="hidden lg:block w-64 border-r bg-card shrink-0">
+          <div className="flex h-full flex-col">
+            <div className="flex h-16 items-center border-b px-6">
+              <Link to="/" className="flex items-center gap-2 font-bold text-lg">
+                <FileText className="h-6 w-6 text-primary" />
+                Form Builder
+              </Link>
+            </div>
+            <nav className="flex-1 space-y-1 p-4">
+              <NavLinks />
+            </nav>
+            <div className="border-t p-4">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="w-full justify-start">
+                    <User className="mr-2 h-4 w-4" />
+                    <span className="truncate">{profile?.username || 'User'}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium">{profile?.username}</p>
+                      <p className="text-xs text-muted-foreground capitalize">{profile?.role}</p>
                     </div>
-                  </div>
-                  <Button variant="ghost" className="w-full justify-start mt-2" onClick={handleSignOut}>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/settings">
+                      <Settings className="mr-2 h-4 w-4" />
+                      Settings
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSignOut}>
                     <LogOut className="mr-2 h-4 w-4" />
                     Sign Out
-                  </Button>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+        </aside>
+      )}
+
+      {/* Main Content */}
+      <div className="flex flex-1 flex-col min-w-0 overflow-hidden">
+        {/* Mobile Header */}
+        <header className="lg:hidden flex h-16 items-center gap-4 border-b bg-card px-4">
+          {showSidebar && (
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-64 p-0">
+                <SheetHeader className="sr-only">
+                  <SheetTitle>Navigation Menu</SheetTitle>
+                  <SheetDescription>Access your dashboard, forms, templates, and teams.</SheetDescription>
+                </SheetHeader>
+                <div className="flex h-full flex-col">
+                  <div className="flex h-16 items-center border-b px-6">
+                    <Link to="/" className="flex items-center gap-2 font-bold text-lg">
+                      <FileText className="h-6 w-6 text-primary" />
+                      Form Builder
+                    </Link>
+                  </div>
+                  <nav className="flex-1 space-y-1 p-4">
+                    <NavLinks />
+                  </nav>
+                  <div className="border-t p-4">
+                    <div className="flex items-center gap-3 px-3 py-2">
+                      <User className="h-4 w-4" />
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium">{profile?.username}</span>
+                        <span className="text-xs text-muted-foreground capitalize">{profile?.role}</span>
+                      </div>
+                    </div>
+                    <Button variant="ghost" className="w-full justify-start mt-2" onClick={handleSignOut}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Sign Out
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </SheetContent>
-          </Sheet>
+              </SheetContent>
+            </Sheet>
+          )}
           <div className="flex-1">
             <Link to="/" className="flex items-center gap-2 font-bold">
               <FileText className="h-5 w-5 text-primary" />

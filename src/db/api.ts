@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import type { Form, FormField, Submission, Team, TeamMember, EmailConfig, Webhook, Profile } from '@/types';
+import type { Form, FormField, Submission, Team, EmailConfig, Webhook } from '@/types';
 
 // Forms API
 export const formsApi = {

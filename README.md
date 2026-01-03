@@ -80,6 +80,10 @@ Vite, TypeScript, React, Supabase, shadcn/ui, Tailwind CSS
 
 ## Getting Started
 
+> [!IMPORTANT]
+> **Supabase Setup Required**: If you encounter login errors, please read [SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md) to configure your database and authentication.
+
+
 ### First Time Setup
 
 1. **Create an account**: Sign up with a username and password

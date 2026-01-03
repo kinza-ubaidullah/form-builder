@@ -13,7 +13,6 @@ import {
   TrendingUp,
   Eye,
   ArrowRight,
-  Zap,
   LayoutTemplate,
   MoreVertical,
   Copy,
@@ -162,17 +161,17 @@ export default function Dashboard() {
 
   return (
     <AppLayout>
-      <div className="p-8 space-y-8 max-w-7xl mx-auto">
+      <div className="p-4 md:p-8 space-y-6 md:space-y-8 max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent pb-1">Dashboard</h1>
-            <p className="text-muted-foreground text-lg">
+            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent pb-1">Dashboard</h1>
+            <p className="text-muted-foreground text-sm md:text-lg">
               Welcome back, <span className="font-semibold text-foreground">{profile?.username}</span>!
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <Button onClick={() => navigate('/forms/new')} className="shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95">
+            <Button onClick={() => navigate('/forms/new')} className="w-full md:w-auto shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95">
               <Plus className="mr-2 h-4 w-4" />
               Create Form
             </Button>
@@ -352,9 +351,9 @@ export default function Dashboard() {
                                   <Copy className="h-4 w-4 text-primary" />
                                   Clone Instance
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => navigate(`/submissions?formId=${form.id}`)} className="rounded-xl flex items-center gap-2 p-3 font-bold text-xs uppercase tracking-tighter cursor-pointer">
+                                <DropdownMenuItem onClick={() => navigate(`/forms/${form.id}/submissions`)} className="rounded-xl flex items-center gap-2 p-3 font-bold text-xs uppercase tracking-tighter cursor-pointer">
                                   <BarChart3 className="h-4 w-4 text-emerald-500" />
-                                  View Analytics
+                                  View Responses
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator className="my-2 bg-slate-50" />
                                 <DropdownMenuItem onClick={(e) => handleArchive(e, form.id)} className="rounded-xl flex items-center gap-2 p-3 font-bold text-xs uppercase tracking-tighter cursor-pointer">

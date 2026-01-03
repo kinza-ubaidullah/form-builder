@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, forwardRef } from 'react';
 import { Link } from 'react-router-dom';
 import { AppLayout } from '@/components/layouts/AppLayout';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -35,7 +35,6 @@ import {
   MoreVertical,
   Edit,
   Trash2,
-  Copy,
   Eye,
   Code,
   Calendar,
@@ -44,6 +43,114 @@ import {
   ArrowRight
 } from 'lucide-react';
 import type { Form } from '@/types';
+
+
+
+const FormCard = forwardRef<HTMLDivElement, {
+  form: Form;
+  getStatusColor: (status: string) => string;
+  onEmbed: (id: string) => void;
+  onDelete: (id: string) => void;
+}>(({ form, getStatusColor, onEmbed, onDelete }, ref) => (
+  <motion.div
+    ref={ref}
+    layout
+    initial={{ opacity: 0, scale: 0.9 }}
+    animate={{ opacity: 1, scale: 1 }}
+    exit={{ opacity: 0, scale: 0.9 }}
+    whileHover={{ y: -5 }}
+    transition={{ duration: 0.2 }}
+  >
+    <Card className="shadow-sm hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 group flex flex-col h-full border-primary/5 bg-white/80 backdrop-blur-sm overflow-hidden">
+      <CardHeader className="p-5 pb-3">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-3">
+            <div className={`p-2.5 rounded-xl transition-colors ${form.status === 'published' ? 'bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white' : 'bg-muted text-muted-foreground group-hover:bg-slate-200'}`}>
+              <FileText className="h-5 w-5" />
+            </div>
+            <div className="space-y-1">
+              <Link to={`/forms/${form.id}/edit`} className="hover:text-primary transition-colors">
+                <CardTitle className="text-lg font-bold line-clamp-1 tracking-tight">{form.title}</CardTitle>
+              </Link>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className={`font-semibold text-[10px] uppercase tracking-wider px-2 py-0 h-5 ${getStatusColor(form.status)} border shadow-sm`}>
+                  {form.status}
+                </Badge>
+                <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  {new Date(form.updated_at).toLocaleDateString()}
+                </span>
+              </div>
+            </div>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-all">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48 p-1 shadow-xl border-primary/10 backdrop-blur-md bg-white/95">
+              <DropdownMenuItem asChild className="rounded-md">
+                <Link to={`/forms/${form.id}/edit`}>
+                  <Edit className="mr-2 h-4 w-4 text-primary" />
+                  Edit Form
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild className="rounded-md">
+                <Link to={`/forms/${form.id}/submissions`}>
+                  <BarChart3 className="mr-2 h-4 w-4 text-primary" />
+                  Analytics
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator className="bg-slate-100" />
+              <DropdownMenuItem asChild className="rounded-md">
+                <Link to={`/form/${form.id}`} target="_blank">
+                  <Eye className="mr-2 h-4 w-4 text-primary" />
+                  Preview
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onEmbed(form.id)} className="rounded-md">
+                <Code className="mr-2 h-4 w-4 text-primary" />
+                Embed Code
+              </DropdownMenuItem>
+              <DropdownMenuSeparator className="bg-slate-100" />
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive focus:bg-destructive/5 rounded-md"
+                onClick={() => onDelete(form.id)}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </CardHeader>
+      <CardContent className="p-5 pt-0 flex-grow">
+        {form.description ? (
+          <p className="text-sm text-slate-500 line-clamp-2 leading-relaxed font-medium">
+            {form.description}
+          </p>
+        ) : (
+          <p className="text-sm text-slate-400 italic font-medium">No description provided</p>
+        )}
+      </CardContent>
+      <CardFooter className="p-4 pt-4 border-t border-slate-50 bg-slate-50/50 mt-auto flex justify-between items-center gap-2">
+        <Button variant="outline" size="sm" className="text-[11px] font-bold h-8 flex-1 border-slate-200 hover:border-primary/30 hover:bg-white hover:text-primary transition-all shadow-sm" asChild>
+          <Link to={`/forms/${form.id}/submissions`}>
+            Submissions
+          </Link>
+        </Button>
+        <Button size="sm" className="text-[11px] font-bold h-8 flex-1 shadow-lg shadow-primary/10 active:scale-[0.98] transition-all" asChild>
+          <Link to={`/forms/${form.id}/design`}>
+            Design
+          </Link>
+        </Button>
+      </CardFooter>
+    </Card>
+  </motion.div>
+));
+
+FormCard.displayName = 'FormCard';
 
 export default function Forms() {
   const [forms, setForms] = useState<Form[]>([]);
@@ -139,104 +246,6 @@ export default function Forms() {
         return 'bg-slate-100 text-slate-700 hover:bg-slate-200/80 border-slate-200';
     }
   };
-
-  const FormCard = ({ form }: { form: Form }) => (
-    <motion.div
-      layout
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.9 }}
-      whileHover={{ y: -5 }}
-      transition={{ duration: 0.2 }}
-    >
-      <Card className="shadow-sm hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 group flex flex-col h-full border-primary/5 bg-white/80 backdrop-blur-sm overflow-hidden">
-        <CardHeader className="p-5 pb-3">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-3">
-              <div className={`p-2.5 rounded-xl transition-colors ${form.status === 'published' ? 'bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white' : 'bg-muted text-muted-foreground group-hover:bg-slate-200'}`}>
-                <FileText className="h-5 w-5" />
-              </div>
-              <div className="space-y-1">
-                <Link to={`/forms/${form.id}/edit`} className="hover:text-primary transition-colors">
-                  <CardTitle className="text-lg font-bold line-clamp-1 tracking-tight">{form.title}</CardTitle>
-                </Link>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className={`font-semibold text-[10px] uppercase tracking-wider px-2 py-0 h-5 ${getStatusColor(form.status)} border shadow-sm`}>
-                    {form.status}
-                  </Badge>
-                  <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1">
-                    <Calendar className="h-3 w-3" />
-                    {new Date(form.updated_at).toLocaleDateString()}
-                  </span>
-                </div>
-              </div>
-            </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-all">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 p-1 shadow-xl border-primary/10 backdrop-blur-md bg-white/95">
-                <DropdownMenuItem asChild className="rounded-md">
-                  <Link to={`/forms/${form.id}/edit`}>
-                    <Edit className="mr-2 h-4 w-4 text-primary" />
-                    Edit Form
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild className="rounded-md">
-                  <Link to={`/forms/${form.id}/submissions`}>
-                    <BarChart3 className="mr-2 h-4 w-4 text-primary" />
-                    Analytics
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-slate-100" />
-                <DropdownMenuItem asChild className="rounded-md">
-                  <Link to={`/form/${form.id}`} target="_blank">
-                    <Eye className="mr-2 h-4 w-4 text-primary" />
-                    Preview
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setEmbedFormId(form.id)} className="rounded-md">
-                  <Code className="mr-2 h-4 w-4 text-primary" />
-                  Embed Code
-                </DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-slate-100" />
-                <DropdownMenuItem
-                  className="text-destructive focus:text-destructive focus:bg-destructive/5 rounded-md"
-                  onClick={() => setDeleteFormId(form.id)}
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </CardHeader>
-        <CardContent className="p-5 pt-0 flex-grow">
-          {form.description ? (
-            <p className="text-sm text-slate-500 line-clamp-2 leading-relaxed font-medium">
-              {form.description}
-            </p>
-          ) : (
-            <p className="text-sm text-slate-400 italic font-medium">No description provided</p>
-          )}
-        </CardContent>
-        <CardFooter className="p-4 pt-4 border-t border-slate-50 bg-slate-50/50 mt-auto flex justify-between items-center gap-2">
-          <Button variant="outline" size="sm" className="text-[11px] font-bold h-8 flex-1 border-slate-200 hover:border-primary/30 hover:bg-white hover:text-primary transition-all shadow-sm" asChild>
-            <Link to={`/forms/${form.id}/submissions`}>
-              Submissions
-            </Link>
-          </Button>
-          <Button size="sm" className="text-[11px] font-bold h-8 flex-1 shadow-lg shadow-primary/10 active:scale-[0.98] transition-all" asChild>
-            <Link to={`/forms/${form.id}/edit`}>
-              Design
-            </Link>
-          </Button>
-        </CardFooter>
-      </Card>
-    </motion.div>
-  );
 
   return (
     <AppLayout>
@@ -373,7 +382,13 @@ export default function Forms() {
               >
                 <AnimatePresence mode="popLayout">
                   {filteredForms.map((form) => (
-                    <FormCard key={form.id} form={form} />
+                    <FormCard
+                      key={form.id}
+                      form={form}
+                      getStatusColor={getStatusColor}
+                      onEmbed={setEmbedFormId}
+                      onDelete={setDeleteFormId}
+                    />
                   ))}
                 </AnimatePresence>
               </motion.div>
@@ -406,13 +421,15 @@ export default function Forms() {
       </AlertDialog>
 
       {/* Embed Code Dialog */}
-      {embedFormId && (
-        <EmbedCodeDialog
-          open={!!embedFormId}
-          onOpenChange={(open) => !open && setEmbedFormId(null)}
-          formId={embedFormId}
-        />
-      )}
+      {
+        embedFormId && (
+          <EmbedCodeDialog
+            open={!!embedFormId}
+            onOpenChange={(open) => !open && setEmbedFormId(null)}
+            formId={embedFormId}
+          />
+        )
+      }
     </AppLayout>
   );
 }

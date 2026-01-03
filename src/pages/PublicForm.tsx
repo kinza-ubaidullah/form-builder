@@ -21,6 +21,8 @@ import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import type { Form, FormField } from '@/types';
 
+import { supabase } from '@/db/supabase';
+
 export default function PublicForm() {
   const { id } = useParams<{ id: string }>();
   const { toast } = useToast();
@@ -33,6 +35,7 @@ export default function PublicForm() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [currentStep, setCurrentStep] = useState(0);
   const [allSteps, setAllSteps] = useState<FormField[][]>([]);
+  const [uploading, setUploading] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (id) {
@@ -105,10 +108,14 @@ export default function PublicForm() {
       }
     }
 
-    if (field.field_type === 'email' && value) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(value)) {
-        return 'Please enter a valid email address';
+    if (field.validation?.pattern && value) {
+      try {
+        const regex = new RegExp(field.validation.pattern);
+        if (!regex.test(String(value))) {
+          return field.validation.custom_error || 'Invalid format';
+        }
+      } catch (e) {
+        console.error('Invalid regex pattern:', field.validation.pattern);
       }
     }
 
@@ -121,9 +128,12 @@ export default function PublicForm() {
 
     const newErrors: Record<string, string> = {};
     fields.forEach((field) => {
-      const error = validateField(field, formData[field.id]);
-      if (error) {
-        newErrors[field.id] = error;
+      // Only validate fields that are currently visible
+      if (isFieldVisible(field)) {
+        const error = validateField(field, formData[field.id]);
+        if (error) {
+          newErrors[field.id] = error;
+        }
       }
     });
 
@@ -226,13 +236,17 @@ export default function PublicForm() {
     const isVisible = isFieldVisible(field);
     if (!isVisible) return null;
 
-    const colSpan = field.col_span || 2;
+    const colSpan = field.col_span || 4;
     const isSection = field.field_type === 'section';
 
     const FieldWrapper = ({ children }: { children: React.ReactNode }) => (
       <div className={cn(
         "space-y-2 animate-in fade-in slide-in-from-bottom-2 duration-500",
-        isSection || colSpan === 2 ? "col-span-1 md:col-span-2" : "col-span-1"
+        isSection ? "col-span-1 md:col-span-4" :
+          colSpan === 1 ? "col-span-1 md:col-span-1" :
+            colSpan === 2 ? "col-span-1 md:col-span-2" :
+              colSpan === 3 ? "col-span-1 md:col-span-3" :
+                "col-span-1 md:col-span-4"
       )}>
         {!isSection && (
           <Label htmlFor={field.id} className={`text-sm font-medium ${error ? 'text-destructive' : ''}`}>
@@ -470,30 +484,97 @@ export default function PublicForm() {
       case 'image':
         return (
           <FieldWrapper key={field.id}>
-            <div className="group relative border-2 border-dashed border-slate-200 rounded-2xl p-8 hover:border-[#2196F3] hover:bg-[#2196F3]/5 transition-all cursor-pointer">
+            <div className={`group relative border-2 border-dashed rounded-2xl p-8 hover:border-[#2196F3] hover:bg-[#2196F3]/5 transition-all cursor-pointer ${uploading[field.id] ? 'border-[#2196F3] bg-[#2196F3]/5' : 'border-slate-200'}`}>
               <input
                 type="file"
-                className="absolute inset-0 opacity-0 cursor-pointer"
-                onChange={(e) => {
+                className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                disabled={uploading[field.id]}
+                onChange={async (e) => {
                   const file = e.target.files?.[0];
-                  if (file) handleFieldChange(field.id, file.name);
+                  if (!file) return;
+
+                  try {
+                    setUploading(prev => ({ ...prev, [field.id]: true }));
+                    const fileExt = file.name.split('.').pop();
+                    const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
+                    const filePath = `public/${fileName}`;
+
+                    const { error: uploadError } = await supabase.storage
+                      .from('uploads')
+                      .upload(filePath, file);
+
+                    if (uploadError) throw uploadError;
+
+                    const { data: { publicUrl } } = supabase.storage
+                      .from('uploads')
+                      .getPublicUrl(filePath);
+
+                    handleFieldChange(field.id, publicUrl);
+                    toast({
+                      title: 'Success',
+                      description: 'File uploaded successfully',
+                    });
+                  } catch (error) {
+                    console.error('Upload failed:', error);
+                    toast({
+                      title: 'Error',
+                      description: 'Failed to upload file. Please try again.',
+                      variant: 'destructive',
+                    });
+                  } finally {
+                    setUploading(prev => ({ ...prev, [field.id]: false }));
+                  }
                 }}
                 accept={field.field_type === 'image' ? 'image/*' : undefined}
               />
-              <div className="flex flex-col items-center justify-center text-center space-y-2">
-                <div className="p-3 bg-slate-50 rounded-xl group-hover:bg-white transition-colors">
-                  {field.field_type === 'image' ? (
-                    <ImageIcon className="h-6 w-6 text-slate-400 group-hover:text-[#2196F3]" />
-                  ) : (
-                    <Upload className="h-6 w-6 text-slate-400 group-hover:text-[#2196F3]" />
-                  )}
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-slate-900">
-                    {formData[field.id] || `Select ${field.field_type === 'image' ? 'Image' : 'File'}`}
-                  </p>
-                  <p className="text-xs text-slate-400 font-medium italic">Click or drag to upload</p>
-                </div>
+              <div className="flex flex-col items-center justify-center text-center space-y-2 pointer-events-none">
+                {uploading[field.id] ? (
+                  <div className="absolute inset-0 flex items-center justify-center bg-white/50 backdrop-blur-sm rounded-2xl">
+                    <Loader2 className="h-8 w-8 text-[#2196F3] animate-spin" />
+                  </div>
+                ) : (
+                  <>
+                    <div className="p-3 bg-slate-50 rounded-xl group-hover:bg-white transition-colors relative">
+                      {field.field_type === 'image' ? (
+                        formData[field.id] ? (
+                          <div className="relative h-20 w-20">
+                            <img src={formData[field.id]} alt="Preview" className="h-full w-full object-cover rounded-lg shadow-sm" />
+                            <div className="absolute -top-2 -right-2 bg-green-500 text-white p-0.5 rounded-full border-2 border-white">
+                              <CheckCircle2 className="h-3 w-3" />
+                            </div>
+                          </div>
+                        ) : (
+                          <ImageIcon className="h-6 w-6 text-slate-400 group-hover:text-[#2196F3]" />
+                        )
+                      ) : (
+                        formData[field.id] ? (
+                          <div className="flex flex-col items-center">
+                            <div className="relative">
+                              <Upload className="h-6 w-6 text-green-500" />
+                              <div className="absolute -top-2 -right-2 bg-green-500 text-white p-0.5 rounded-full border-2 border-white">
+                                <CheckCircle2 className="h-3 w-3" />
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <Upload className="h-6 w-6 text-slate-400 group-hover:text-[#2196F3]" />
+                        )
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-slate-900 truncate max-w-[200px] mx-auto">
+                        {formData[field.id] ? (
+                          field.field_type === 'image' ? 'Image Uploaded' : 'File Uploaded'
+                        ) : (
+                          `Select ${field.field_type === 'image' ? 'Image' : 'File'}`
+                        )}
+                      </p>
+                      <p className="text-xs text-slate-400 font-medium italic">
+                        {formData[field.id] ? 'Click to replace' : 'Click or drag to upload'}
+                      </p>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </FieldWrapper>
@@ -640,27 +721,27 @@ export default function PublicForm() {
         transition={{ duration: 0.5 }}
         className="max-w-4xl mx-auto"
       >
-        <Card className="shadow-2xl border-t-8 border-t-primary rounded-[32px] overflow-hidden">
-          <CardHeader className="space-y-4 pb-8 border-b bg-card/50 relative">
+        <Card className="shadow-lg border-t-4 border-t-primary rounded-xl overflow-hidden bg-white/80 backdrop-blur-sm">
+          <CardHeader className="space-y-4 pb-8 border-b bg-card relative">
             {allSteps.length > 1 && (
               <div className="absolute top-4 right-8 px-3 py-1 bg-primary/10 rounded-full">
-                <span className="text-[10px] font-black uppercase text-primary tracking-widest">
+                <span className="text-[10px] font-bold uppercase text-primary tracking-widest">
                   Step {currentStep + 1} of {allSteps.length}
                 </span>
               </div>
             )}
-            <CardTitle className="text-4xl font-black text-center tracking-tighter italic text-slate-900">
+            <CardTitle className="text-3xl font-bold text-center tracking-tight text-foreground">
               {form.title}
             </CardTitle>
             {form.description && (
-              <CardDescription className="text-center text-lg max-w-xl mx-auto font-medium italic">
+              <CardDescription className="text-center text-lg max-w-xl mx-auto font-medium text-muted-foreground">
                 {form.description}
               </CardDescription>
             )}
 
             {/* Progress Bar */}
             {allSteps.length > 1 && (
-              <div className="w-full h-1.5 bg-slate-100 rounded-full mt-6 overflow-hidden max-w-md mx-auto">
+              <div className="w-full h-1.5 bg-secondary rounded-full mt-6 overflow-hidden max-w-md mx-auto">
                 <motion.div
                   className="h-full bg-primary"
                   initial={{ width: 0 }}
@@ -671,7 +752,7 @@ export default function PublicForm() {
           </CardHeader>
           <CardContent className="p-10">
             <form onSubmit={handleSubmit} className="space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-10">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-x-6 gap-y-8">
                 {(allSteps[currentStep] || []).map((field) => renderField(field))}
               </div>
 
@@ -703,17 +784,17 @@ export default function PublicForm() {
                   <Button
                     type="submit"
                     size="lg"
-                    className="flex-[2] h-14 text-lg font-bold rounded-2xl shadow-xl shadow-primary/20 hover:shadow-primary/30 transition-all active:scale-95"
+                    className="flex-[2] h-12 text-base font-semibold rounded-lg shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all active:scale-95"
                     disabled={submitting}
                   >
                     {submitting ? (
                       <>
                         <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                        Processing Blueprint...
+                        Submitting...
                       </>
                     ) : (
                       <>
-                        {form.settings?.submit_button_text || 'Finalize Submission'}
+                        {form.settings?.submit_button_text || 'Submit Form'}
                         <CheckCircle2 className="ml-2 h-5 w-5" />
                       </>
                     )}

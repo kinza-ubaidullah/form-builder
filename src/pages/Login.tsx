@@ -15,6 +15,8 @@ export default function Login() {
   const [signInPassword, setSignInPassword] = useState('');
   const [signUpUsername, setSignUpUsername] = useState('');
   const [signUpPassword, setSignUpPassword] = useState('');
+  const [signUpEmail, setSignUpEmail] = useState('');
+  const [signUpPhone, setSignUpPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
@@ -22,6 +24,10 @@ export default function Login() {
   const { toast } = useToast();
 
   const from = (location.state as any)?.from || '/';
+
+  // Debugging: Log the current Supabase URL to help user verify they are connecting to the correct project
+  console.log('Current Supabase URL:', import.meta.env.VITE_SUPABASE_URL);
+
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,6 +70,22 @@ export default function Login() {
     }
   };
 
+  const validateEmail = (email: string) => {
+    // Basic format check
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) return 'Invalid email format';
+
+    // Anti-dummy check
+    const lowerEmail = email.toLowerCase();
+    const blockedDomains = ['test.com', 'example.com', 'sample.com', 'mailinator.com', 'yopmail.com', 'tempmail.com'];
+    const domain = lowerEmail.split('@')[1];
+
+    if (blockedDomains.includes(domain)) return 'Please use a valid, non-disposable email address';
+    if (lowerEmail.endsWith('.test') || lowerEmail.endsWith('.example')) return 'Please use a valid email address';
+
+    return null;
+  };
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -95,8 +117,36 @@ export default function Login() {
       return;
     }
 
+    if (!signUpEmail) {
+      toast({
+        title: 'Email Required',
+        description: 'Please enter a contact email address',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const emailError = validateEmail(signUpEmail);
+    if (emailError) {
+      toast({
+        title: 'Invalid Email',
+        description: emailError,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (signUpPhone && !/^\+?[\d\s-]+$/.test(signUpPhone)) {
+      toast({
+        title: 'Invalid Phone',
+        description: 'Please enter a valid phone number',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setLoading(true);
-    const { error } = await signUp(signUpUsername, signUpPassword);
+    const { error } = await signUp(signUpUsername, signUpPassword, signUpEmail, signUpPhone);
     setLoading(false);
 
     if (error) {
@@ -219,6 +269,35 @@ export default function Login() {
                       Only letters, numbers, and underscores allowed
                     </p>
                   </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-email" className="text-sm font-semibold text-slate-700">Contact Email</Label>
+                    <Input
+                      id="signup-email"
+                      type="email"
+                      placeholder="your@email.com"
+                      value={signUpEmail}
+                      onChange={(e) => setSignUpEmail(e.target.value)}
+                      disabled={loading}
+                      autoComplete="email"
+                      className="bg-white/50 border-primary/20 focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all shadow-sm h-11"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-phone" className="text-sm font-semibold text-slate-700">Phone Number (Optional)</Label>
+                    <Input
+                      id="signup-phone"
+                      type="tel"
+                      placeholder="+1234567890"
+                      value={signUpPhone}
+                      onChange={(e) => setSignUpPhone(e.target.value)}
+                      disabled={loading}
+                      autoComplete="tel"
+                      className="bg-white/50 border-primary/20 focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all shadow-sm h-11"
+                    />
+                  </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="signup-password" className="text-sm font-semibold text-slate-700">Password</Label>
                     <Input
